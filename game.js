@@ -121,7 +121,7 @@ const ball={x:-5.8,z:0,vx:0,vz:0,owner:null,height:.31,spin:0};
 const state={running:false,last:0,elapsed:0,home:0,away:0};
 const input={x:0,z:0,sprint:false};
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-const dist=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
+const dist=(a,b)=>{const ax=a.root?a.root.position.x:a.x,az=a.root?a.root.position.z:a.z;return Math.hypot(ax-b.x,az-b.z)};
 function updatePlayerVisual(p,dt,moving){
  p.phase+=dt*(moving?12:2);
  const swing=moving?Math.sin(p.phase)*.65:Math.sin(p.phase)*.035;
@@ -142,7 +142,7 @@ function update(dt){
   moving=true;
  }
  updatePlayerVisual(player,dt,moving);
- const target=ball.owner==='player'?player.root.position:ball;
+ const target=ball.owner==='player'?player.root.position:(ball.owner==='rival'?{x:-15.8,z:0}:ball);
  const rx=target.x-rival.root.position.x,rz=target.z-rival.root.position.z;
  const rd=Math.hypot(rx,rz)||1;
  const rivalSpeed=ball.owner==='rival'?5.5:6.2;
