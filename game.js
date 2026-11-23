@@ -172,6 +172,7 @@ function update(dt){
   if(dist(player,ball)<.95&&Math.hypot(ball.vx,ball.vz)<5)ball.owner='player';
   if(dist(rival,ball)<.88){ball.owner='rival';ball.vx=ball.vz=0}
  }
+ if(Math.abs(ball.x)>17.35&&Math.abs(ball.z)<2.15){if(ball.x<0)state.away++;else state.home++;homeEl.textContent=state.home;awayEl.textContent=state.away;resetPositions();}
  ballGroup.position.set(ball.x,ball.height,ball.z);
  ballMesh.rotation.x+=ball.vz*dt*1.4;ballMesh.rotation.z-=ball.vx*dt*1.4;
  ballShadow.position.x=ball.x;ballShadow.position.z=ball.z;
