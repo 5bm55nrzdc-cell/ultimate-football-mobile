@@ -1,32 +1,29 @@
 <!doctype html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#071b13">
-  <title>Ultimate Football Mobile</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#071b13">
+<title>Ultimate Football Mobile</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <main class="app">
-    <header class="topbar">
-      <div><span class="eyebrow">ULTIMATE FOOTBALL</span><h1>МАТЧ</h1></div>
-      <div class="score"><span id="homeScore">0</span><i>:</i><span id="awayScore">0</span></div>
-      <div class="clock" id="clock">00:00</div>
-    </header>
-    <section class="pitch-wrap" aria-label="Футбольное поле">
-      <canvas id="pitch" width="900" height="600"></canvas>
-      <div class="overlay" id="overlay"><h2>Ultimate Football</h2><p>Твой матч начинается здесь</p><button id="startBtn">НАЧАТЬ МАТЧ</button></div>
-    </section>
-    <section class="controls">
-      <div class="move-pad" aria-label="Управление движением">
-        <button data-move="up">▲</button>
-        <div><button data-move="left">◀</button><button data-move="down">▼</button><button data-move="right">▶</button></div>
-      </div>
-      <div class="actions"><button id="passBtn">ПАС</button><button id="shootBtn" class="shoot">УДАР</button></div>
-    </section>
-    <p class="hint">Управляй игроком кнопками. На компьютере также работают WASD и стрелки.</p>
-  </main>
-  <script src="game.js"></script>
+<main class="game">
+  <header class="hud">
+    <div class="team"><span class="crest">U</span><span>ULTIMATE FC</span></div>
+    <div class="score"><span id="homeScore">0</span><b>:</b><span id="awayScore">0</span></div>
+    <div class="timer" id="clock">00:00</div>
+  </header>
+  <section class="pitch-wrap">
+    <canvas id="pitch" width="1200" height="720" aria-label="Футбольное поле"></canvas>
+    <div class="overlay" id="overlay"><div class="start-card"><div class="ball-icon">⚽</div><p class="eyebrow">ULTIMATE FOOTBALL MOBILE</p><h1>ВРЕМЯ ИГРАТЬ</h1><p>Матч 1 на 1</p><button id="startBtn">НАЧАТЬ МАТЧ</button></div></div>
+    <div class="rotate-note" id="rotateNote">↻ Поверни телефон горизонтально</div>
+    <div class="mobile-controls">
+      <div class="joystick" id="joystick"><div class="joy-ring"></div><div class="joy-knob" id="joyKnob"></div></div>
+      <div class="action-buttons"><button id="sprintBtn" class="action sprint">РЫВОК</button><button id="passBtn" class="action pass">ПАС</button><button id="shootBtn" class="action shoot">УДАР</button></div>
+    </div>
+  </section>
+</main>
+<script src="game.js"></script>
 </body>
 </html>
