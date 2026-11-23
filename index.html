@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#071b13">
+  <title>Ultimate Football Mobile</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div><span class="eyebrow">ULTIMATE FOOTBALL</span><h1>МАТЧ</h1></div>
+      <div class="score"><span id="homeScore">0</span><i>:</i><span id="awayScore">0</span></div>
+      <div class="clock" id="clock">00:00</div>
+    </header>
+    <section class="pitch-wrap" aria-label="Футбольное поле">
+      <canvas id="pitch" width="900" height="600"></canvas>
+      <div class="overlay" id="overlay"><h2>Ultimate Football</h2><p>Твой матч начинается здесь</p><button id="startBtn">НАЧАТЬ МАТЧ</button></div>
+    </section>
+    <section class="controls">
+      <div class="move-pad" aria-label="Управление движением">
+        <button data-move="up">▲</button>
+        <div><button data-move="left">◀</button><button data-move="down">▼</button><button data-move="right">▶</button></div>
+      </div>
+      <div class="actions"><button id="passBtn">ПАС</button><button id="shootBtn" class="shoot">УДАР</button></div>
+    </section>
+    <p class="hint">Управляй игроком кнопками. На компьютере также работают WASD и стрелки.</p>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
