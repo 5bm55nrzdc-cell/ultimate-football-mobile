@@ -205,18 +205,39 @@ function start(){
 }
 startBtn.addEventListener('click',start);
 const joy=document.getElementById('joystick'),knob=document.getElementById('joyKnob');
-let pointer=null;
-function joyMove(e){
- if(pointer!==e.pointerId)return;
- const r=joy.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,max=r.width*.31;
- let dx=e.clientX-cx,dz=e.clientY-cy,len=Math.hypot(dx,dz);
+let pointer=null,touchActive=false;
+function setStick(clientX,clientY){
+ const r=joy.getBoundingClientRect();
+ const cx=r.left+r.width/2,cy=r.top+r.height/2,max=Math.max(20,r.width*.31);
+ let dx=clientX-cx,dz=clientY-cy,len=Math.hypot(dx,dz);
  if(len>max){dx=dx/len*max;dz=dz/len*max}
  input.x=dx/max;input.z=dz/max;
- knob.style.transform='translate('+dx+'px,'+dz+'px)';
+ knob.style.transform='translate3d('+dx+'px,'+dz+'px,0)';
 }
-function joyEnd(e){if(pointer!==e.pointerId)return;pointer=null;input.x=input.z=0;knob.style.transform='translate(0,0)'}
-joy.addEventListener('pointerdown',e=>{e.preventDefault();pointer=e.pointerId;joy.setPointerCapture(pointer);joyMove(e)});
-joy.addEventListener('pointermove',joyMove);joy.addEventListener('pointerup',joyEnd);joy.addEventListener('pointercancel',joyEnd);
+function resetStick(){
+ pointer=null;touchActive=false;input.x=0;input.z=0;
+ knob.style.transform='translate3d(0,0,0)';
+}
+joy.addEventListener('pointerdown',e=>{
+ e.preventDefault();pointer=e.pointerId;setStick(e.clientX,e.clientY);
+ if(joy.setPointerCapture){try{joy.setPointerCapture(pointer)}catch(_){}}
+});
+window.addEventListener('pointermove',e=>{
+ if(pointer!==e.pointerId)return;e.preventDefault();setStick(e.clientX,e.clientY);
+},{passive:false});
+window.addEventListener('pointerup',e=>{if(pointer===e.pointerId)resetStick()});
+window.addEventListener('pointercancel',e=>{if(pointer===e.pointerId)resetStick()});
+// Touch fallback for mobile browsers where pointer capture is unreliable.
+joy.addEventListener('touchstart',e=>{
+ e.preventDefault();touchActive=true;
+ const t=e.changedTouches[0];if(t)setStick(t.clientX,t.clientY);
+},{passive:false});
+joy.addEventListener('touchmove',e=>{
+ if(!touchActive)return;e.preventDefault();
+ const t=e.touches[0];if(t)setStick(t.clientX,t.clientY);
+},{passive:false});
+joy.addEventListener('touchend',e=>{if(touchActive){e.preventDefault();resetStick()}},{passive:false});
+joy.addEventListener('touchcancel',resetStick,{passive:true});
 const sprint=document.getElementById('sprintBtn');
 sprint.addEventListener('pointerdown',e=>{e.preventDefault();input.sprint=true});
 ['pointerup','pointercancel','pointerleave'].forEach(ev=>sprint.addEventListener(ev,()=>input.sprint=false));
