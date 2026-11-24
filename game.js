@@ -225,7 +225,7 @@ ballShadow.rotation.x=-Math.PI/2;ballShadow.position.y=.025;scene.add(ballShadow
 const ball={x:-10.8,z:0,vx:0,vz:0,owner:null,height:.31,spin:0};
 const state={running:false,last:0,elapsed:0,home:0,away:0};
 const input={x:0,z:0,sprint:false};
-let cameraMode='behind';
+let cameraMode='broadcast';
 let cameraYaw=0;
 const cameraBtn=document.getElementById('cameraBtn');
 let tackleCooldown=0;
@@ -407,25 +407,31 @@ function update(dt){
  ballMesh.rotation.x+=ball.vz*dt*1.4;ballMesh.rotation.z-=ball.vx*dt*1.4;
  ballShadow.position.x=ball.x;ballShadow.position.z=ball.z;
  ballShadow.scale.setScalar(1-Math.min(.35,ball.height*.22));
- // True third-person chase camera: steady while moving, then settles behind
- // the direction the player is facing.
+ // Broadcast-style match camera: follows the play, not the controlled player's back.
+ // The ball and controlled player stay in view while the pitch remains readable.
  const px=player.root.position.x,pz=player.root.position.z,bx=ball.x,bz=ball.z;
- if(cameraMode==='behind'){
-  if(magnitude<=.08){
-   const targetYaw=player.root.rotation.y;
-   const angleDelta=Math.atan2(Math.sin(targetYaw-cameraYaw),Math.cos(targetYaw-cameraYaw));
-   cameraYaw+=angleDelta*(1-Math.exp(-dt*3.2));
-  }
-  const distance=7.6;
+ if(cameraMode==='broadcast'){
+  const playX=clamp(px*.42+bx*.58,-13,13);
+  const playZ=clamp(pz*.30+bz*.70,-5.5,5.5);
+  const spread=Math.hypot(px-bx,pz-bz);
+  const desiredHeight=34+Math.min(5,spread*.22);
+  const follow=1-Math.exp(-dt*2.4);
+  camera.position.x+=(playX*.20-camera.position.x)*follow;
+  camera.position.y+=(desiredHeight-camera.position.y)*(1-Math.exp(-dt*1.8));
+  camera.position.z+=(43-camera.position.z)*follow;
+  camera.lookAt(playX*.48,0,playZ*.20);
+ }else if(cameraMode==='behind'){
+  const targetYaw=player.root.rotation.y;
+  const angleDelta=Math.atan2(Math.sin(targetYaw-cameraYaw),Math.cos(targetYaw-cameraYaw));
+  cameraYaw+=angleDelta*(1-Math.exp(-dt*2.1));
+  const distance=8.5;
   const desiredX=px-Math.sin(cameraYaw)*distance;
   const desiredZ=pz-Math.cos(cameraYaw)*distance;
-  const follow=1-Math.exp(-dt*5.2);
+  const follow=1-Math.exp(-dt*3.0);
   camera.position.x+=(desiredX-camera.position.x)*follow;
-  camera.position.y+=(5.4-camera.position.y)*(1-Math.exp(-dt*3.4));
+  camera.position.y+=(7.0-camera.position.y)*(1-Math.exp(-dt*2.2));
   camera.position.z+=(desiredZ-camera.position.z)*follow;
-  const aimX=px+Math.sin(cameraYaw)*3.2;
-  const aimZ=pz+Math.cos(cameraYaw)*3.2;
-  camera.lookAt(aimX,1.15,aimZ);
+  camera.lookAt(px+Math.sin(cameraYaw)*3.6,1.1,pz+Math.cos(cameraYaw)*3.6);
  }else{
   const centerX=px*.42+bx*.58;
   camera.position.x+=(centerX*.28-camera.position.x)*Math.min(1,dt*1.7);
@@ -456,7 +462,14 @@ function resize(){
  camera.lookAt(0,0,0);
 }
 window.addEventListener('resize',resize,{passive:true});resize();
-cameraBtn.addEventListener('click',()=>{cameraMode=cameraMode==='behind'?'side':'behind';cameraBtn.textContent=cameraMode==='behind'?'КАМЕРА: ЗА ИГРОКОМ':'КАМЕРА: СБОКУ';});
+function updateCameraLabel(){
+ cameraBtn.textContent=cameraMode==='broadcast'?'КАМЕРА: ТРАНСЛЯЦИЯ':cameraMode==='behind'?'КАМЕРА: ЗА ИГРОКОМ':'КАМЕРА: СБОКУ';
+}
+updateCameraLabel();
+cameraBtn.addEventListener('click',()=>{
+ cameraMode=cameraMode==='broadcast'?'behind':cameraMode==='behind'?'side':'broadcast';
+ updateCameraLabel();
+});
 function frame(now){
  if(!state.running)return;
  const dt=Math.min((now-state.last)/1000,.04);state.last=now;state.elapsed+=dt;
