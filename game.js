@@ -223,7 +223,7 @@ function tryTackle(){
 }
 function checkGoal(){
  // Goal mouths are 4.5 m wide and 2.5 m high; the ball must fully cross the line.
- if(Math.abs(ball.x)>17.18&&Math.abs(ball.z)<2.08&&ball.height<2.35){
+ if(Math.abs(ball.x)>16.85&&Math.abs(ball.z)<2.08&&ball.height<2.35){
   scoreGoal(ball.x>0?'home':'away');
   return true;
  }
