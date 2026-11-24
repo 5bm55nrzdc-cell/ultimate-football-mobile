@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#071b13">
 <title>Ultimate Football Mobile</title>
-<link rel="stylesheet" href="style.css?v=20261124f">
+<link rel="stylesheet" href="style.css?v=20261124g">
 </head>
 <body>
 <main class="game">
@@ -16,7 +16,32 @@
   </header>
   <section class="pitch-wrap">
     <canvas id="pitch" width="1200" height="720" aria-label="Футбольное поле"></canvas>
-    <div class="overlay" id="overlay"><div class="start-card"><div class="ball-icon">⚽</div><p class="eyebrow">ULTIMATE FOOTBALL MOBILE</p><h1>ВРЕМЯ ИГРАТЬ</h1><p>Матч 3 на 3</p><button id="startBtn">НАЧАТЬ МАТЧ</button></div></div>
+    <div class="overlay" id="overlay">
+    <div class="start-card main-menu" id="mainMenu">
+      <div class="ball-icon">⚽</div><p class="eyebrow">ULTIMATE FOOTBALL MOBILE</p>
+      <h1>ГЛАВНОЕ МЕНЮ</h1><p class="menu-subtitle">Твой путь к футбольной славе начинается здесь</p>
+      <div class="menu-buttons">
+        <button id="playBtn">ИГРАТЬ</button>
+        <button class="secondary-menu-btn" id="trainingBtn">ОБУЧЕНИЕ</button>
+        <button class="secondary-menu-btn" id="profileBtn">ПРОФИЛЬ: ГОСТЬ</button>
+        <button class="secondary-menu-btn" id="settingsBtn">НАСТРОЙКИ</button>
+      </div>
+      <p class="menu-footnote" id="menuMessage">Режим 3 на 3 · Локальный профиль</p>
+    </div>
+  </div>
+  <div class="training-overlay hidden" id="trainingOverlay">
+    <div class="training-card">
+      <p class="eyebrow">АКАДЕМИЯ ULTIMATE</p>
+      <div class="training-progress" id="trainingProgress">УРОК 1 ИЗ 6</div>
+      <h2 id="trainingTitle">ДВИЖЕНИЕ</h2>
+      <p id="trainingText">Освой управление игроком.</p>
+      <div class="training-tip" id="trainingTip">Практикуйся на поле.</div>
+      <div class="training-actions">
+        <button class="secondary-menu-btn" id="trainingBackBtn">В МЕНЮ</button>
+        <button id="trainingNextBtn">ДАЛЕЕ</button>
+      </div>
+    </div>
+  </div>
     <div class="rotate-note" id="rotateNote">↻ Поверни телефон горизонтально</div>
     <div class="mobile-controls">
       <div class="joystick" id="joystick"><div class="joy-ring"></div><div class="joy-knob" id="joyKnob"></div></div>
@@ -24,6 +49,6 @@
     </div>
   </section>
 </main>
-<script type="module" src="game.js?v=20261124f"></script>
+<script type="module" src="game.js?v=20261124g"></script>
 </body>
 </html>
