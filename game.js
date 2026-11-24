@@ -19,9 +19,9 @@ const homeEl=document.getElementById('homeScore');
 const awayEl=document.getElementById('awayScore');
 const scene=new THREE.Scene();
 scene.background=new THREE.Color(0x8fc5d2);
-scene.fog=new THREE.Fog(0x8fc5d2,42,92);
+scene.fog=new THREE.Fog(0x8fc5d2,58,125);
 const camera=new THREE.PerspectiveCamera(43,1,.1,150);
-camera.position.set(0,24,31);
+camera.position.set(0,38,48);
 camera.lookAt(0,0,0);
 const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});
 renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.7));
@@ -54,10 +54,10 @@ turfTexture.wrapS=turfTexture.wrapT=THREE.RepeatWrapping;
 turfTexture.repeat.set(3,2);turfTexture.colorSpace=THREE.SRGBColorSpace;
 grassA.map=turfTexture;grassB.map=turfTexture;
 
-const field=new THREE.Mesh(new THREE.PlaneGeometry(36,22),grassA);field.rotation.x=-Math.PI/2;field.receiveShadow=true;scene.add(field);
-for(let i=0;i<9;i++){
- const strip=new THREE.Mesh(new THREE.PlaneGeometry(4,22),i%2?grassA:grassB);
- strip.rotation.x=-Math.PI/2;strip.position.set(-16+i*4,.006,0);strip.receiveShadow=true;scene.add(strip);
+const field=new THREE.Mesh(new THREE.PlaneGeometry(60,38),grassA);field.rotation.x=-Math.PI/2;field.receiveShadow=true;scene.add(field);
+for(let i=0;i<15;i++){
+ const strip=new THREE.Mesh(new THREE.PlaneGeometry(4,38),i%2?grassA:grassB);
+ strip.rotation.x=-Math.PI/2;strip.position.set(-28+i*4,.006,0);strip.receiveShadow=true;scene.add(strip);
 }
 function line(points,material=white,radius=.035){
  const curve=new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(p[0],.035,p[1])));
@@ -65,12 +65,12 @@ function line(points,material=white,radius=.035){
  scene.add(mesh);return mesh;
 }
 function rect(x1,z1,x2,z2){line([[x1,z1],[x2,z1],[x2,z2],[x1,z2],[x1,z1]])}
-rect(-17,-10.5,17,10.5);
-line([[0,-10.5],[0,10.5]]);
-const circlePts=[];for(let i=0;i<=80;i++){const a=i/80*Math.PI*2;circlePts.push([Math.cos(a)*3.1,Math.sin(a)*3.1])}line(circlePts);
+rect(-29,-18,29,18);
+line([[0,-18],[0,18]]);
+const circlePts=[];for(let i=0;i<=80;i++){const a=i/80*Math.PI*2;circlePts.push([Math.cos(a)*5.2,Math.sin(a)*5.2])}line(circlePts);
 const spot=(x,z)=>{const m=new THREE.Mesh(new THREE.CircleGeometry(.11,20),white);m.rotation.x=-Math.PI/2;m.position.set(x,.04,z);scene.add(m)};
-spot(0,0);spot(-12,0);spot(12,0);
-rect(-17,-4.2,-12,4.2);rect(12,-4.2,17,4.2);rect(-17,-2.1,-15,2.1);rect(15,-2.1,17,2.1);
+spot(0,0);spot(-20,0);spot(20,0);
+rect(-29,-7.2,-21,7.2);rect(21,-7.2,29,7.2);rect(-29,-3.6,-25,3.6);rect(25,-3.6,29,3.6);
 function stand(x,z,sx,sz,rotation=0){
  const base=new THREE.Mesh(new THREE.BoxGeometry(sx,2.4,sz),mat(0x263a36));
  base.position.set(x,1.05,z);base.rotation.y=rotation;base.castShadow=true;base.receiveShadow=true;scene.add(base);
@@ -79,7 +79,7 @@ function stand(x,z,sx,sz,rotation=0){
   step.position.set(x,.65+row*.48,z+(row-1.5)*.13);step.rotation.y=rotation;scene.add(step);
  }
 }
-stand(0,-13,38,4);stand(0,13,38,4);stand(-21,0,4,22);stand(21,0,4,22);
+stand(0,-21,64,4);stand(0,21,64,4);stand(-33,0,4,42);stand(33,0,4,42);
 
 // Thousands-seat atmosphere represented by compact, varied crowd silhouettes.
 const crowdMats=[0xd94f45,0xf0d36b,0xe9ecef,0x3f8edb,0x253b32,0x9b6bc4].map(c=>mat(c,.9));
@@ -89,7 +89,7 @@ for(let side of [-1,1]){
   for(let col=0;col<64;col++){
    if((col+row)%7===0)continue;
    const person=new THREE.Mesh(crowdGeo,crowdMats[(col*3+row*5)%crowdMats.length]);
-   person.position.set(-18+col*.57,1.75+row*.43,side*(14.15+row*.22));
+   person.position.set(-31+col*.98,1.75+row*.43,side*(22.15+row*.22));
    person.scale.set(.85,1.35,.8);person.castShadow=false;scene.add(person);
   }
  }
@@ -98,7 +98,7 @@ for(let side of [-1,1]){
  for(let row=0;row<3;row++){
   for(let col=0;col<25;col++){
    const person=new THREE.Mesh(crowdGeo,crowdMats[(col+row*2)%crowdMats.length]);
-   person.position.set(side*(22.1+row*.22),1.7+row*.42,-9+col*.75);
+   person.position.set(side*(34.1+row*.22),1.7+row*.42,-18+col*1.5);
    person.scale.set(.8,1.3,.8);scene.add(person);
   }
  }
@@ -106,35 +106,35 @@ for(let side of [-1,1]){
 // Animated-looking LED advertising fascia around the pitch.
 const boardMat=mat(0x102a25,.45,.2);
 for(const side of [-1,1]){
- const board=new THREE.Mesh(new THREE.BoxGeometry(35,.62,.22),boardMat);
- board.position.set(0,.36,side*11.05);scene.add(board);
+ const board=new THREE.Mesh(new THREE.BoxGeometry(62,.62,.22),boardMat);
+ board.position.set(0,.36,side*21.05);scene.add(board);
  const signCanvas=document.createElement('canvas');signCanvas.width=1024;signCanvas.height=64;
  const sc=signCanvas.getContext('2d');
  sc.fillStyle='#102a25';sc.fillRect(0,0,1024,64);
  sc.fillStyle='#c7ff83';sc.font='bold 34px Arial';sc.textAlign='center';
  sc.fillText('ULTIMATE FOOTBALL  •  PLAY WITH PASSION  •  ULTIMATE FOOTBALL',512,44);
  const signTex=new THREE.CanvasTexture(signCanvas);signTex.colorSpace=THREE.SRGBColorSpace;
- const sign=new THREE.Mesh(new THREE.PlaneGeometry(34.8,.52),new THREE.MeshBasicMaterial({map:signTex}));
- sign.position.set(0,.38,side*10.925);sign.rotation.y=side===1?0:Math.PI;scene.add(sign);
+ const sign=new THREE.Mesh(new THREE.PlaneGeometry(61.8,.52),new THREE.MeshBasicMaterial({map:signTex}));
+ sign.position.set(0,.38,side*20.925);sign.rotation.y=side===1?0:Math.PI;scene.add(sign);
 }
 
 function goal(x,sign){
  const group=new THREE.Group();const postMat=mat(0xffffff,.35,.35);
  const post=(y,z)=>{const m=new THREE.Mesh(new THREE.CylinderGeometry(.09,.09,y,12),postMat);m.position.set(x,y/2,z);m.castShadow=true;group.add(m)};
- post(2.5,-2.25);post(2.5,2.25);
- const bar=new THREE.Mesh(new THREE.CylinderGeometry(.09,.09,4.5,12),postMat);bar.rotation.x=Math.PI/2;bar.position.set(x,2.5,0);group.add(bar);
+ post(2.5,-2.5);post(2.5,2.5);
+ const bar=new THREE.Mesh(new THREE.CylinderGeometry(.09,.09,5,12),postMat);bar.rotation.x=Math.PI/2;bar.position.set(x,2.5,0);group.add(bar);
  const netMat=new THREE.MeshBasicMaterial({color:0xe8f4ed,wireframe:true,transparent:true,opacity:.25});
- const net=new THREE.Mesh(new THREE.BoxGeometry(1.8,2.5,4.5),netMat);net.position.set(x+sign*.9,1.25,0);group.add(net);
+ const net=new THREE.Mesh(new THREE.BoxGeometry(1.8,2.5,5),netMat);net.position.set(x+sign*.9,1.25,0);group.add(net);
  scene.add(group);
 }
-goal(-17,-1);goal(17,1);
+goal(-29,-1);goal(29,1);
 for(let side of [-1,1]){
  for(let i=0;i<5;i++){
   const pole=new THREE.Mesh(new THREE.CylinderGeometry(.08,.13,9,8),metal);
-  pole.position.set(side*19.5,4.5,-8+i*4);pole.castShadow=true;scene.add(pole);
+  pole.position.set(side*32.5,4.5,-16+i*8);pole.castShadow=true;scene.add(pole);
   const lamp=new THREE.Mesh(new THREE.BoxGeometry(.9,.28,.65),mat(0xfff2bf,.25));
   lamp.position.set(side*19.5,9,-8+i*4);scene.add(lamp);
-  const glow=new THREE.PointLight(0xffedc2,5,18,2);glow.position.set(side*19,8.7,-8+i*4);scene.add(glow);
+  const glow=new THREE.PointLight(0xffedc2,5,18,2);glow.position.set(side*32,8.7,-8+i*4);scene.add(glow);
  }
 }
 function capsule(radius,length,material){
@@ -183,7 +183,18 @@ for(const side of [-1,1]){
 }
 const player=makePlayer(0x2d8cff,0xffffff,10);
 const rival=makePlayer(0xe94e48,0xffd44c,9);
-player.root.position.set(-7,0,0);rival.root.position.set(7,0,0);rival.root.rotation.y=-Math.PI/2;
+const teammates=[
+ makePlayer(0x2d8cff,0xffffff,7),
+ makePlayer(0x2d8cff,0xffffff,11)
+];
+const opponents=[
+ makePlayer(0xe94e48,0xffd44c,4),
+ makePlayer(0xe94e48,0xffd44c,6)
+];
+player.root.position.set(-12,0,0);rival.root.position.set(12,0,0);rival.root.rotation.y=-Math.PI/2;
+teammates[0].root.position.set(-17,-8,0);teammates[1].root.position.set(-17,8,0);
+opponents[0].root.position.set(14,-9,0);opponents[1].root.position.set(14,9,0);
+for(const p of [...teammates,...opponents])p.root.rotation.y=-Math.PI/2;
 const ballGroup=new THREE.Group();scene.add(ballGroup);
 const ballMesh=new THREE.Mesh(new THREE.SphereGeometry(.31,24,18),mat(0xffffff,.34));
 ballMesh.castShadow=true;ballGroup.add(ballMesh);
@@ -191,7 +202,7 @@ const patches=mat(0x18201c,.5);
 for(let i=0;i<5;i++){const p=new THREE.Mesh(new THREE.CircleGeometry(.105,5),patches);p.position.set(Math.cos(i*2*Math.PI/5)*.305,Math.sin(i*2*Math.PI/5)*.305,0);p.rotation.z=i*.2;ballMesh.add(p)}
 const ballShadow=new THREE.Mesh(new THREE.CircleGeometry(.4,20),new THREE.MeshBasicMaterial({color:0x07140c,transparent:true,opacity:.3}));
 ballShadow.rotation.x=-Math.PI/2;ballShadow.position.y=.025;scene.add(ballShadow);
-const ball={x:-5.8,z:0,vx:0,vz:0,owner:null,height:.31,spin:0};
+const ball={x:-10.8,z:0,vx:0,vz:0,owner:null,height:.31,spin:0};
 const state={running:false,last:0,elapsed:0,home:0,away:0};
 const input={x:0,z:0,sprint:false};
 let tackleCooldown=0;
@@ -223,7 +234,7 @@ function tryTackle(){
 }
 function checkGoal(){
  // Goal mouths are 4.5 m wide and 2.5 m high; the ball must fully cross the line.
- if(Math.abs(ball.x)>16.85&&Math.abs(ball.z)<2.08&&ball.height<2.35){
+ if(Math.abs(ball.x)>28.85&&Math.abs(ball.z)<2.28&&ball.height<2.35){
   scoreGoal(ball.x>0?'home':'away');
   return true;
  }
@@ -249,8 +260,8 @@ function update(dt){
   const dx=input.x/magnitude,dz=input.z/magnitude;
   player.dx=dx;player.dz=dz;
   const speed=input.sprint?8.7:6.1;
-  player.root.position.x=clamp(player.root.position.x+dx*speed*dt,-16.1,16.1);
-  player.root.position.z=clamp(player.root.position.z+dz*speed*dt,-9.5,9.5);
+  player.root.position.x=clamp(player.root.position.x+dx*speed*dt,-28,28);
+  player.root.position.z=clamp(player.root.position.z+dz*speed*dt,-17,17);
   player.root.rotation.y=Math.atan2(dx,dz);
   moving=true;
  }
@@ -259,10 +270,28 @@ function update(dt){
  const rx=target.x-rival.root.position.x,rz=target.z-rival.root.position.z;
  const rd=Math.hypot(rx,rz)||1;
  const rivalSpeed=ball.owner==='rival'?5.5:6.2;
- rival.root.position.x=clamp(rival.root.position.x+rx/rd*rivalSpeed*dt,-16.1,16.1);
- rival.root.position.z=clamp(rival.root.position.z+rz/rd*rivalSpeed*dt,-9.5,9.5);
+ rival.root.position.x=clamp(rival.root.position.x+rx/rd*rivalSpeed*dt,-28,28);
+ rival.root.position.z=clamp(rival.root.position.z+rz/rd*rivalSpeed*dt,-17,17);
  rival.root.rotation.y=Math.atan2(rx,rz);
  updatePlayerVisual(rival,dt,rd>.8);
+ // Teammates keep width and offer passing lanes around the ball carrier.
+ teammates.forEach((mate,i)=>{
+  const side=i===0?-1:1;
+  const tx=clamp(player.root.position.x+3.5,-25,23);
+  const tz=clamp(player.root.position.z+side*7,-15,15);
+  const mx=tx-mate.root.position.x,mz=tz-mate.root.position.z,md=Math.hypot(mx,mz)||1;
+  mate.root.position.x+=mx/md*5.1*dt;mate.root.position.z+=mz/md*5.1*dt;
+  mate.root.rotation.y=Math.atan2(mx,mz);updatePlayerVisual(mate,dt,md>.7);
+ });
+ // Extra defenders close passing lanes; they press the ball when it enters their half.
+ opponents.forEach((enemy,i)=>{
+  const side=i===0?-1:1;
+  const tx=ball.owner==='rival'?clamp(ball.x+4,-24,25):clamp(Math.max(4,ball.x+2),5,25);
+  const tz=clamp(ball.z+side*4,-15,15);
+  const ex=tx-enemy.root.position.x,ez=tz-enemy.root.position.z,ed=Math.hypot(ex,ez)||1;
+  enemy.root.position.x+=ex/ed*5.4*dt;enemy.root.position.z+=ez/ed*5.4*dt;
+  enemy.root.rotation.y=Math.atan2(ex,ez);updatePlayerVisual(enemy,dt,ed>.7);
+ });
  if(ball.owner==='player'){
   const a=player.root.rotation.y;
   const tx=player.root.position.x+Math.sin(a)*.82,tz=player.root.position.z+Math.cos(a)*.82;
@@ -276,32 +305,32 @@ function update(dt){
   const drag=Math.pow(.987,dt*60);ball.vx*=drag;ball.vz*=drag;
   if(Math.hypot(ball.vx,ball.vz)<.08)ball.vx=ball.vz=0;
   ball.height=.31+Math.abs(Math.sin(state.elapsed*9))*Math.min(.2,Math.hypot(ball.vx,ball.vz)*.012);
-  if(Math.abs(ball.z)>9.8){ball.z=clamp(ball.z,-9.8,9.8);ball.vz*=-.68}
+  if(Math.abs(ball.z)>17.8){ball.z=clamp(ball.z,-17.8,17.8);ball.vz*=-.68}
   // Goal-line and post collisions are resolved below after ball integration.
-  if(Math.abs(ball.x)>17.8&&Math.abs(ball.z)>2.15){ball.x=clamp(ball.x,-17.8,17.8);ball.vx*=-.55}
+  if(Math.abs(ball.x)>29.8&&Math.abs(ball.z)>2.15){ball.x=clamp(ball.x,-29.8,29.8);ball.vx*=-.55}
   if(Math.abs(ball.x)>17.8&&Math.abs(ball.z)<2.15&&ball.height>=2.35){ball.x=clamp(ball.x,-17.8,17.8);ball.vx*=-.55}
   if(dist(player,ball)<.95&&Math.hypot(ball.vx,ball.vz)<5)ball.owner='player';
   if(dist(rival,ball)<.88){ball.owner='rival';ball.vx=ball.vz=0}
  }
 
  // Goal frame collision: posts and crossbar deflect shots that miss the opening.
- if(Math.abs(Math.abs(ball.x)-17)<.34){
-  for(const postZ of [-2.25,2.25]){
-   const d=Math.hypot(ball.x-Math.sign(ball.x)*17,ball.z-postZ);
+ if(Math.abs(Math.abs(ball.x)-29)<.34){
+  for(const postZ of [-2.5,2.5]){
+   const d=Math.hypot(ball.x-Math.sign(ball.x)*29,ball.z-postZ);
    if(d<.43&&ball.height<2.65){
     const nx=(ball.x-Math.sign(ball.x)*17)/(d||1),nz=(ball.z-postZ)/(d||1);
     const dot=ball.vx*nx+ball.vz*nz;
     if(dot<0){ball.vx-=1.55*dot*nx;ball.vz-=1.55*dot*nz;}
    }
   }
-  if(Math.abs(ball.z)<2.25&&Math.abs(ball.height-2.5)<.38){
+  if(Math.abs(ball.z)<2.5&&Math.abs(ball.height-2.5)<.38){
    ball.height=2.13;ball.vx*=-.55;ball.vz*=.82;
   }
  }
  if(checkGoal())return;
  // Back net: absorb the ball after it crosses into the goal.
- if(Math.abs(ball.x)>18.7&&Math.abs(ball.z)<2.2&&ball.height<2.4){
-  ball.x=Math.sign(ball.x)*18.7;ball.vx=0;ball.vz*=.45;
+ if(Math.abs(ball.x)>30.7&&Math.abs(ball.z)<2.2&&ball.height<2.4){
+  ball.x=Math.sign(ball.x)*30.7;ball.vx=0;ball.vz*=.45;
  }
  ballGroup.position.set(ball.x,ball.height,ball.z);
  ballMesh.rotation.x+=ball.vz*dt*1.4;ballMesh.rotation.z-=ball.vx*dt*1.4;
@@ -314,7 +343,7 @@ function update(dt){
 }
 function resetPositions(){
  player.root.position.set(-7,0,0);rival.root.position.set(7,0,0);
- ball.x=-5.8;ball.z=0;ball.vx=ball.vz=0;ball.owner=null;ball.height=.31;
+ ball.x=-10.8;ball.z=0;ball.vx=ball.vz=0;ball.owner=null;ball.height=.31;
 }
 function render(){renderer.render(scene,camera)}
 function resize(){
@@ -322,11 +351,11 @@ function resize(){
  renderer.setSize(w,h,false);
  camera.aspect=aspect;
  if(aspect<1){
-  camera.fov=58;
-  camera.position.set(0,34,43);
+  camera.fov=62;
+  camera.position.set(0,44,56);
  }else{
-  camera.fov=43;
-  camera.position.set(0,24,31);
+  camera.fov=52;
+  camera.position.set(0,38,48);
  }
  camera.updateProjectionMatrix();
  camera.lookAt(0,0,0);
