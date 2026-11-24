@@ -205,6 +205,8 @@ ballShadow.rotation.x=-Math.PI/2;ballShadow.position.y=.025;scene.add(ballShadow
 const ball={x:-10.8,z:0,vx:0,vz:0,owner:null,height:.31,spin:0};
 const state={running:false,last:0,elapsed:0,home:0,away:0};
 const input={x:0,z:0,sprint:false};
+let cameraMode='behind';
+const cameraBtn=document.getElementById('cameraBtn');
 let tackleCooldown=0;
 const goalFlash={until:0};
 function scoreGoal(side){
@@ -336,10 +338,22 @@ function update(dt){
  ballMesh.rotation.x+=ball.vz*dt*1.4;ballMesh.rotation.z-=ball.vx*dt*1.4;
  ballShadow.position.x=ball.x;ballShadow.position.z=ball.z;
  ballShadow.scale.setScalar(1-Math.min(.35,ball.height*.22));
- // Smooth camera framing keeps the action readable on phones.
- const cx=player.root.position.x*.17;
- camera.position.x+=(cx-camera.position.x)*Math.min(1,dt*1.5);
- camera.lookAt(cx*.3,0,0);
+ // Player-follow camera looks toward the ball; side mode gives a broadcast view.
+ const px=player.root.position.x,pz=player.root.position.z,bx=ball.x,bz=ball.z;
+ if(cameraMode==='behind'){
+  const yaw=player.root.rotation.y;
+  const desiredX=px-Math.sin(yaw)*11,desiredZ=pz-Math.cos(yaw)*11;
+  camera.position.x+=(desiredX-camera.position.x)*Math.min(1,dt*3.2);
+  camera.position.y+=(10.5-camera.position.y)*Math.min(1,dt*2.2);
+  camera.position.z+=(desiredZ-camera.position.z)*Math.min(1,dt*3.2);
+  camera.lookAt(px*.42+bx*.58,.65,pz*.42+bz*.58);
+ }else{
+  const centerX=px*.42+bx*.58;
+  camera.position.x+=(centerX*.28-camera.position.x)*Math.min(1,dt*1.7);
+  camera.position.y+=(35-camera.position.y)*Math.min(1,dt*1.7);
+  camera.position.z+=(46-camera.position.z)*Math.min(1,dt*1.7);
+  camera.lookAt(centerX*.45,0,0);
+ }
 }
 function resetPositions(){
  player.root.position.set(-7,0,0);rival.root.position.set(7,0,0);
@@ -363,6 +377,7 @@ function resize(){
  camera.lookAt(0,0,0);
 }
 window.addEventListener('resize',resize,{passive:true});resize();
+cameraBtn.addEventListener('click',()=>{cameraMode=cameraMode==='behind'?'side':'behind';cameraBtn.textContent=cameraMode==='behind'?'КАМЕРА: ЗА ИГРОКОМ':'КАМЕРА: СБОКУ';});
 function frame(now){
  if(!state.running)return;
  const dt=Math.min((now-state.last)/1000,.04);state.last=now;state.elapsed+=dt;
