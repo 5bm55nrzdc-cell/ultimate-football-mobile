@@ -13,3 +13,18 @@
 .action:active{filter:brightness(1.2);transform:scale(.92)}
 .joystick{backdrop-filter:blur(5px);-webkit-tap-highlight-color:transparent}
 @media(orientation:portrait){.rotate-note{display:grid;z-index:8;background:radial-gradient(ellipse at center,#183e2b,#06130d);font-size:clamp(16px,4vw,22px)}}
+
+
+/* Mobile portrait support: keep the 3D match and controls visible */
+@media (orientation:portrait){
+  .rotate-note{display:none!important}
+  .hud{display:flex!important;height:48px;padding-left:12px;padding-right:12px}
+  .mobile-controls{display:flex!important;padding:0 14px max(14px,env(safe-area-inset-bottom))}
+  .pitch-wrap canvas{opacity:1!important}
+  .joystick{width:104px;height:104px}
+  .action-buttons{gap:7px}
+  .action{width:58px;height:58px;font-size:9px}
+  .shoot{width:68px;height:68px}
+  .pass{margin-bottom:15px}
+}
+.joystick{touch-action:none;overscroll-behavior:contain}
