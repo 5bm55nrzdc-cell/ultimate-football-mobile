@@ -39,6 +39,21 @@ sun.shadow.bias=-.00025;scene.add(sun);
 const fill=new THREE.DirectionalLight(0x9ecbff,1.15);fill.position.set(18,13,-16);scene.add(fill);
 const mat=(color,roughness=.8,metalness=0)=>new THREE.MeshStandardMaterial({color,roughness,metalness});
 const grassA=mat(0x16763c),grassB=mat(0x1b8243),white=mat(0xf4f6e9,.65),dark=mat(0x14231c),metal=mat(0x9aa8a2,.35,.7);
+
+// Procedural turf texture: subtle blades and mowing variation, generated locally.
+const turfCanvas=document.createElement('canvas');turfCanvas.width=512;turfCanvas.height=512;
+const turfCtx=turfCanvas.getContext('2d');
+turfCtx.fillStyle='#ffffff';turfCtx.fillRect(0,0,512,512);
+for(let i=0;i<12500;i++){
+ const x=Math.random()*512,y=Math.random()*512,a=.025+Math.random()*.09;
+ turfCtx.fillStyle=Math.random()>.5?'rgba(8,45,18,'+a+')':'rgba(225,255,210,'+a+')';
+ turfCtx.fillRect(x,y,1+Math.random()*2,1+Math.random()*5);
+}
+const turfTexture=new THREE.CanvasTexture(turfCanvas);
+turfTexture.wrapS=turfTexture.wrapT=THREE.RepeatWrapping;
+turfTexture.repeat.set(3,2);turfTexture.colorSpace=THREE.SRGBColorSpace;
+grassA.map=turfTexture;grassB.map=turfTexture;
+
 const field=new THREE.Mesh(new THREE.PlaneGeometry(36,22),grassA);field.rotation.x=-Math.PI/2;field.receiveShadow=true;scene.add(field);
 for(let i=0;i<9;i++){
  const strip=new THREE.Mesh(new THREE.PlaneGeometry(4,22),i%2?grassA:grassB);
@@ -65,6 +80,44 @@ function stand(x,z,sx,sz,rotation=0){
  }
 }
 stand(0,-13,38,4);stand(0,13,38,4);stand(-21,0,4,22);stand(21,0,4,22);
+
+// Thousands-seat atmosphere represented by compact, varied crowd silhouettes.
+const crowdMats=[0xd94f45,0xf0d36b,0xe9ecef,0x3f8edb,0x253b32,0x9b6bc4].map(c=>mat(c,.9));
+const crowdGeo=new THREE.SphereGeometry(.105,7,6);
+for(let side of [-1,1]){
+ for(let row=0;row<3;row++){
+  for(let col=0;col<64;col++){
+   if((col+row)%7===0)continue;
+   const person=new THREE.Mesh(crowdGeo,crowdMats[(col*3+row*5)%crowdMats.length]);
+   person.position.set(-18+col*.57,1.75+row*.43,side*(14.15+row*.22));
+   person.scale.set(.85,1.35,.8);person.castShadow=false;scene.add(person);
+  }
+ }
+}
+for(let side of [-1,1]){
+ for(let row=0;row<3;row++){
+  for(let col=0;col<25;col++){
+   const person=new THREE.Mesh(crowdGeo,crowdMats[(col+row*2)%crowdMats.length]);
+   person.position.set(side*(22.1+row*.22),1.7+row*.42,-9+col*.75);
+   person.scale.set(.8,1.3,.8);scene.add(person);
+  }
+ }
+}
+// Animated-looking LED advertising fascia around the pitch.
+const boardMat=mat(0x102a25,.45,.2);
+for(const side of [-1,1]){
+ const board=new THREE.Mesh(new THREE.BoxGeometry(35,.62,.22),boardMat);
+ board.position.set(0,.36,side*11.05);scene.add(board);
+ const signCanvas=document.createElement('canvas');signCanvas.width=1024;signCanvas.height=64;
+ const sc=signCanvas.getContext('2d');
+ sc.fillStyle='#102a25';sc.fillRect(0,0,1024,64);
+ sc.fillStyle='#c7ff83';sc.font='bold 34px Arial';sc.textAlign='center';
+ sc.fillText('ULTIMATE FOOTBALL  •  PLAY WITH PASSION  •  ULTIMATE FOOTBALL',512,44);
+ const signTex=new THREE.CanvasTexture(signCanvas);signTex.colorSpace=THREE.SRGBColorSpace;
+ const sign=new THREE.Mesh(new THREE.PlaneGeometry(34.8,.52),new THREE.MeshBasicMaterial({map:signTex}));
+ sign.position.set(0,.38,side*10.925);sign.rotation.y=side===1?0:Math.PI;scene.add(sign);
+}
+
 function goal(x,sign){
  const group=new THREE.Group();const postMat=mat(0xffffff,.35,.35);
  const post=(y,z)=>{const m=new THREE.Mesh(new THREE.CylinderGeometry(.09,.09,y,12),postMat);m.position.set(x,y/2,z);m.castShadow=true;group.add(m)};
@@ -99,6 +152,17 @@ function makePlayer(primary,secondary,number){
  const kit=mat(primary,.63),trim=mat(secondary,.55),skin=mat(0xd6a27d),shorts=mat(0x182a42),sock=mat(0xf0f0e8),boots=mat(0x171d20,.4);
  const torso=capsule(.39,.72,kit);torso.position.y=1.42;torso.castShadow=true;root.add(torso);
  const chest=new THREE.Mesh(new THREE.BoxGeometry(.54,.13,.12),trim);chest.position.set(0,1.55,.33);root.add(chest);
+
+// Kit details: sleeve cuffs and a clean central shirt stripe.
+const stripe=new THREE.Mesh(new THREE.BoxGeometry(.075,.62,.018),trim);
+stripe.position.set(0,1.47,.395);root.add(stripe);
+for(const side of [-1,1]){
+ const sleeve=new THREE.Mesh(new THREE.SphereGeometry(.19,10,8),kit);
+ sleeve.scale.set(1,.72,.82);sleeve.position.set(side*.38,1.67,0);root.add(sleeve);
+ const cuff=new THREE.Mesh(new THREE.TorusGeometry(.105,.025,6,12),trim);
+ cuff.rotation.z=Math.PI/2;cuff.position.set(side*.49,1.56,0);root.add(cuff);
+}
+
  const head=new THREE.Mesh(new THREE.SphereGeometry(.245,16,12),skin);head.position.y=2.08;head.castShadow=true;root.add(head);
  const hair=new THREE.Mesh(new THREE.SphereGeometry(.25,14,8,0,Math.PI*2,0,Math.PI*.55),mat(0x30251f));hair.position.y=2.17;root.add(hair);
  const short=new THREE.Mesh(new THREE.BoxGeometry(.65,.35,.43),shorts);short.position.y=.91;short.castShadow=true;root.add(short);
@@ -137,6 +201,8 @@ function updatePlayerVisual(p,dt,moving){
  const swing=moving?Math.sin(p.phase)*.65:Math.sin(p.phase)*.035;
  p.legs[0].rotation.x=swing;p.legs[1].rotation.x=-swing;
  p.arms[0].rotation.x=-swing*.62;p.arms[1].rotation.x=swing*.62;
+ p.root.rotation.z=moving?Math.sin(p.phase*2)*.035:0;
+ p.root.rotation.x=moving?-.035:0;
  p.root.position.y=moving?Math.abs(Math.sin(p.phase*2))*.045:0;
 }
 function update(dt){
