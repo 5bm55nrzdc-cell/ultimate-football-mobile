@@ -421,17 +421,20 @@ function update(dt){
   camera.position.z+=(43-camera.position.z)*follow;
   camera.lookAt(playX*.48,0,playZ*.20);
  }else if(cameraMode==='behind'){
+  // Track the player's actual facing direction continuously, including while
+  // moving. Previously the yaw only changed while idle, leaving the camera
+  // looking from the wrong side during turns.
   const targetYaw=player.root.rotation.y;
   const angleDelta=Math.atan2(Math.sin(targetYaw-cameraYaw),Math.cos(targetYaw-cameraYaw));
-  cameraYaw+=angleDelta*(1-Math.exp(-dt*2.1));
-  const distance=8.5;
+  cameraYaw+=angleDelta*(1-Math.exp(-dt*4.2));
+  const distance=9.2;
   const desiredX=px-Math.sin(cameraYaw)*distance;
   const desiredZ=pz-Math.cos(cameraYaw)*distance;
-  const follow=1-Math.exp(-dt*3.0);
+  const follow=1-Math.exp(-dt*4.0);
   camera.position.x+=(desiredX-camera.position.x)*follow;
-  camera.position.y+=(7.0-camera.position.y)*(1-Math.exp(-dt*2.2));
+  camera.position.y+=(6.4-camera.position.y)*(1-Math.exp(-dt*3.0));
   camera.position.z+=(desiredZ-camera.position.z)*follow;
-  camera.lookAt(px+Math.sin(cameraYaw)*3.6,1.1,pz+Math.cos(cameraYaw)*3.6);
+  camera.lookAt(px+Math.sin(cameraYaw)*4.1,1.05,pz+Math.cos(cameraYaw)*4.1);
  }else{
   const centerX=px*.42+bx*.58;
   camera.position.x+=(centerX*.28-camera.position.x)*Math.min(1,dt*1.7);
