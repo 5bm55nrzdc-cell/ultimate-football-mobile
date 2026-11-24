@@ -28,3 +28,10 @@
   .pass{margin-bottom:15px}
 }
 .joystick{touch-action:none;overscroll-behavior:contain}
+
+
+/* Defensive action button */
+.action-buttons{flex-wrap:wrap;justify-content:flex-end;max-width:min(54vw,390px)}
+.tackle{background:linear-gradient(145deg,#d85a63,#8d1e36);width:clamp(58px,10vh,78px);height:clamp(58px,10vh,78px);margin-bottom:5px;border-color:#ffd4d8}
+@media(max-height:500px){.tackle{width:48px;height:48px;margin-bottom:2px}}
+@media(orientation:portrait){.action-buttons{max-width:58vw}.tackle{width:54px;height:54px;margin-bottom:3px}}
