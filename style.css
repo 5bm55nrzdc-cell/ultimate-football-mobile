@@ -67,3 +67,22 @@
 .training-actions{display:flex;gap:10px}
 .training-actions button{flex:1;min-height:46px;margin:0;padding:10px;font-size:11px}
 @media(max-width:360px){.menu-buttons{grid-template-columns:1fr}.menu-buttons #playBtn{grid-column:auto}}
+
+/* Account sign-in screen */
+.auth-overlay{position:absolute;inset:0;z-index:9;display:grid;place-items:center;padding:16px;background:#031009f2;backdrop-filter:blur(10px);overflow:auto}
+.auth-overlay.hidden{display:none}
+.auth-card{width:min(94vw,440px);max-height:94dvh;overflow:auto;padding:clamp(20px,4vh,30px);border:1px solid #c5ff8a88;border-radius:20px;background:linear-gradient(145deg,#183e2d,#06180f);box-shadow:0 24px 90px #000b;text-align:center}
+.auth-card h2{font-size:clamp(23px,5vw,34px);margin:8px 0}
+.auth-description{font-size:13px;line-height:1.5;color:#d2e4d4}
+.auth-methods{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:18px 0}
+.auth-method,.auth-form button,.auth-footer button{min-height:46px;border-radius:10px;padding:10px;border:1px solid #a9d99b;background:linear-gradient(145deg,#315744,#173425);color:#efffe9;font-size:11px;font-weight:900;letter-spacing:.3px}
+.auth-method:active,.auth-form button:active{transform:scale(.97)}
+.auth-form{display:grid;gap:9px;margin-top:16px}
+.auth-form.hidden{display:none}
+.auth-form input{width:100%;min-height:46px;border:1px solid #a9d99b88;border-radius:10px;background:#06150f;color:white;padding:0 13px;font-size:14px;user-select:text}
+.auth-form input::placeholder{color:#9eb9a4}
+.auth-form-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.auth-form-actions button:first-child{background:#baf36d;color:#102014;border:0}
+.auth-status{min-height:34px;color:#baf36d;font-size:11px;line-height:1.4;margin:14px 0}
+.auth-footer button{width:100%}
+@media(max-width:360px){.auth-methods{grid-template-columns:1fr}.auth-form-actions{grid-template-columns:1fr}}
