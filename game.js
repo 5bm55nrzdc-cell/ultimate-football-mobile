@@ -259,7 +259,13 @@ function update(dt){
  const magnitude=Math.hypot(input.x,input.z);
  let moving=false;
  if(magnitude>.08){
-  const dx=input.x/magnitude,dz=input.z/magnitude;
+  // Screen-relative controls: joystick up always means forward on screen.
+  // A stable trailing camera prevents the controls from drifting as the player turns.
+  const sideView=cameraMode==='side';
+  let dx=input.x/magnitude;
+  let dz=(sideView?input.z:-input.z)/magnitude;
+  const worldLength=Math.hypot(dx,dz)||1;
+  dx/=worldLength;dz/=worldLength;
   player.dx=dx;player.dz=dz;
   const speed=input.sprint?8.7:6.1;
   player.root.position.x=clamp(player.root.position.x+dx*speed*dt,-28,28);
@@ -341,8 +347,8 @@ function update(dt){
  // Player-follow camera looks toward the ball; side mode gives a broadcast view.
  const px=player.root.position.x,pz=player.root.position.z,bx=ball.x,bz=ball.z;
  if(cameraMode==='behind'){
-  const yaw=player.root.rotation.y;
-  const desiredX=px-Math.sin(yaw)*11,desiredZ=pz-Math.cos(yaw)*11;
+  // Follow from a stable field direction instead of orbiting around the player.
+  const desiredX=px,desiredZ=pz-11;
   camera.position.x+=(desiredX-camera.position.x)*Math.min(1,dt*3.2);
   camera.position.y+=(10.5-camera.position.y)*Math.min(1,dt*2.2);
   camera.position.z+=(desiredZ-camera.position.z)*Math.min(1,dt*3.2);
