@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#071b13">
 <title>Ultimate Football Mobile</title>
-<link rel="stylesheet" href="style.css?v=20261124g">
+<link rel="stylesheet" href="style.css?v=20261124h">
 </head>
 <body>
 <main class="game">
@@ -29,6 +29,31 @@
       <p class="menu-footnote" id="menuMessage">Режим 3 на 3 · Локальный профиль</p>
     </div>
   </div>
+  <div class="auth-overlay hidden" id="authOverlay">
+    <div class="auth-card">
+      <p class="eyebrow">ULTIMATE ACCOUNT</p>
+      <h2 id="authTitle">ТВОЙ АККАУНТ</h2>
+      <p class="auth-description" id="authDescription">Выбери удобный способ входа. Гостевой режим останется доступен.</p>
+      <div class="auth-methods" id="authMethods">
+        <button class="auth-method" data-auth="apple"> Войти с Apple</button>
+        <button class="auth-method" data-auth="google">G Войти с Google</button>
+        <button class="auth-method" data-auth="email">ПОЧТА И ПАРОЛЬ</button>
+        <button class="auth-method" data-auth="phone">ТЕЛЕФОН И SMS</button>
+      </div>
+      <div class="auth-form hidden" id="authForm">
+        <input id="authEmail" type="email" autocomplete="email" placeholder="Электронная почта">
+        <input id="authPassword" type="password" autocomplete="current-password" placeholder="Пароль">
+        <input id="authPhone" type="tel" autocomplete="tel" placeholder="Телефон, например +372...">
+        <input id="authCode" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="Код из SMS">
+        <div class="auth-form-actions">
+          <button id="authSubmit">ПРОДОЛЖИТЬ</button>
+          <button class="secondary-menu-btn" id="authModeToggle">СОЗДАТЬ АККАУНТ</button>
+        </div>
+      </div>
+      <p class="auth-status" id="authStatus" role="status">Реальный вход подключим после настройки Firebase.</p>
+      <div class="auth-footer"><button class="secondary-menu-btn" id="authBackBtn">НАЗАД В МЕНЮ</button></div>
+    </div>
+  </div>
   <div class="training-overlay hidden" id="trainingOverlay">
     <div class="training-card">
       <p class="eyebrow">АКАДЕМИЯ ULTIMATE</p>
@@ -49,6 +74,6 @@
     </div>
   </section>
 </main>
-<script type="module" src="game.js?v=20261124g"></script>
+<script type="module" src="game.js?v=20261124h"></script>
 </body>
 </html>
