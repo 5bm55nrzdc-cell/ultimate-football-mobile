@@ -25,6 +25,15 @@ const trainingTip=document.getElementById('trainingTip');
 const trainingNextBtn=document.getElementById('trainingNextBtn');
 const trainingBackBtn=document.getElementById('trainingBackBtn');
 const menuMessage=document.getElementById('menuMessage');
+const authOverlay=document.getElementById('authOverlay');
+const authTitle=document.getElementById('authTitle');
+const authDescription=document.getElementById('authDescription');
+const authMethods=document.getElementById('authMethods');
+const authForm=document.getElementById('authForm');
+const authStatus=document.getElementById('authStatus');
+const authSubmit=document.getElementById('authSubmit');
+const authModeToggle=document.getElementById('authModeToggle');
+let authMethod='email',authIsRegister=false;
 const clockEl=document.getElementById('clock');
 const homeEl=document.getElementById('homeScore');
 const awayEl=document.getElementById('awayScore');
@@ -437,7 +446,38 @@ trainingNextBtn.addEventListener('click',()=>{
  menuMessage.textContent='Обучение пройдено · Отличная работа!';
 });
 trainingBackBtn.addEventListener('click',()=>trainingOverlay.classList.add('hidden'));
-profileBtn.addEventListener('click',()=>{menuMessage.textContent='Ты играешь как гость. Сохранение аккаунта появится после подключения защищённой авторизации.';});
+profileBtn.addEventListener('click',()=>{
+ authOverlay.classList.remove('hidden');authMethods.classList.remove('hidden');authForm.classList.add('hidden');
+ authTitle.textContent='ТВОЙ АККАУНТ';authDescription.textContent='Выбери удобный способ входа. Гостевой режим останется доступен.';
+ authStatus.textContent='Реальный вход подключим после настройки Firebase.';
+});
+document.getElementById('authBackBtn').addEventListener('click',()=>authOverlay.classList.add('hidden'));
+authMethods.addEventListener('click',e=>{
+ const button=e.target.closest('[data-auth]');if(!button)return;
+ authMethod=button.dataset.auth;
+ if(authMethod==='email'||authMethod==='phone'){
+  authMethods.classList.add('hidden');authForm.classList.remove('hidden');
+  const email=document.getElementById('authEmail'),password=document.getElementById('authPassword');
+  const phone=document.getElementById('authPhone'),code=document.getElementById('authCode');
+  email.classList.toggle('hidden',authMethod!=='email');password.classList.toggle('hidden',authMethod!=='email');
+  phone.classList.toggle('hidden',authMethod!=='phone');code.classList.add('hidden');
+  authTitle.textContent=authMethod==='email'?'ВХОД ПО ПОЧТЕ':'ВХОД ПО ТЕЛЕФОНУ';
+  authModeToggle.classList.toggle('hidden',authMethod!=='email');
+  authSubmit.textContent=authMethod==='email'?'ВОЙТИ':'ОТПРАВИТЬ SMS';
+  authStatus.textContent='Форма готова. Для реального входа нужен проект Firebase.';
+ }else{
+  authStatus.textContent=(authMethod==='apple'?'Apple ID':'Google')+': подключим после настройки Firebase и OAuth-провайдера.';
+ }
+});
+authModeToggle.addEventListener('click',()=>{
+ authIsRegister=!authIsRegister;
+ authTitle.textContent=authIsRegister?'РЕГИСТРАЦИЯ':'ВХОД ПО ПОЧТЕ';
+ authSubmit.textContent=authIsRegister?'СОЗДАТЬ АККАУНТ':'ВОЙТИ';
+ authModeToggle.textContent=authIsRegister?'УЖЕ ЕСТЬ АККАУНТ':'СОЗДАТЬ АККАУНТ';
+});
+authSubmit.addEventListener('click',()=>{
+ authStatus.textContent='Пока не подключено: пришли публичную веб-конфигурацию Firebase, и я подключу реальную проверку аккаунта. Пароль или секретные ключи не присылай.';
+});
 settingsBtn.addEventListener('click',()=>{menuMessage.textContent='Настройки управления и звука добавим следующим этапом.';});
 const joy=document.getElementById('joystick'),knob=document.getElementById('joyKnob');
 let pointer=null;
