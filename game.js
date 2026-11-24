@@ -192,8 +192,8 @@ const opponents=[
  makePlayer(0xe94e48,0xffd44c,6)
 ];
 player.root.position.set(-12,0,0);rival.root.position.set(12,0,0);rival.root.rotation.y=-Math.PI/2;
-teammates[0].root.position.set(-17,-8,0);teammates[1].root.position.set(-17,8,0);
-opponents[0].root.position.set(14,-9,0);opponents[1].root.position.set(14,9,0);
+teammates[0].root.position.set(-17,0,-8);teammates[1].root.position.set(-17,0,8);
+opponents[0].root.position.set(14,0,-9);opponents[1].root.position.set(14,0,9);
 for(const p of [...teammates,...opponents])p.root.rotation.y=-Math.PI/2;
 const ballGroup=new THREE.Group();scene.add(ballGroup);
 const ballMesh=new THREE.Mesh(new THREE.SphereGeometry(.31,24,18),mat(0xffffff,.34));
@@ -318,7 +318,7 @@ function update(dt){
   for(const postZ of [-2.5,2.5]){
    const d=Math.hypot(ball.x-Math.sign(ball.x)*29,ball.z-postZ);
    if(d<.43&&ball.height<2.65){
-    const nx=(ball.x-Math.sign(ball.x)*17)/(d||1),nz=(ball.z-postZ)/(d||1);
+    const nx=(ball.x-Math.sign(ball.x)*29)/(d||1),nz=(ball.z-postZ)/(d||1);
     const dot=ball.vx*nx+ball.vz*nz;
     if(dot<0){ball.vx-=1.55*dot*nx;ball.vz-=1.55*dot*nz;}
    }
@@ -343,6 +343,8 @@ function update(dt){
 }
 function resetPositions(){
  player.root.position.set(-7,0,0);rival.root.position.set(7,0,0);
+ teammates[0].root.position.set(-10,0,-7);teammates[1].root.position.set(-10,0,7);
+ opponents[0].root.position.set(10,0,-7);opponents[1].root.position.set(10,0,7);
  ball.x=-10.8;ball.z=0;ball.vx=ball.vz=0;ball.owner=null;ball.height=.31;
 }
 function render(){renderer.render(scene,camera)}
@@ -409,7 +411,7 @@ function kick(type){
  ball.owner=null;
  let dx,dz,power;
  if(type==='shoot'){
-  const goalX=ball.x<0?29.5:-29.5;
+  const goalX=29.5;
   dx=goalX-ball.x;dz=-ball.z*.28;power=19.5;
  }
  else if(Math.hypot(input.x,input.z)>.2){dx=input.x;dz=input.z;power=10.5}
@@ -423,9 +425,9 @@ tackleBtn.addEventListener('pointerdown',e=>{e.preventDefault();tryTackle()});
 tackleBtn.addEventListener('click',tryTackle);
 window.addEventListener('keydown',e=>{
  const keys={ArrowLeft:'left',a:'left',ArrowRight:'right',d:'right',ArrowUp:'up',w:'up',ArrowDown:'down',s:'down'};
+ if(e.key==='Shift'){input.sprint=true;return;}
  const k=keys[e.key];if(!k)return;e.preventDefault();
  if(k==='left')input.x=-1;if(k==='right')input.x=1;if(k==='up')input.z=-1;if(k==='down')input.z=1;
- if(e.key==='Shift')input.sprint=true;
 });
 window.addEventListener('keyup',e=>{if(['ArrowLeft','ArrowRight','a','d'].includes(e.key))input.x=0;if(['ArrowUp','ArrowDown','w','s'].includes(e.key))input.z=0;if(e.key==='Shift')input.sprint=false});
 render();
