@@ -302,23 +302,58 @@ function update(dt){
  rival.root.position.z=clamp(rival.root.position.z+rz/rd*rivalSpeed*dt,-17,17);
  rival.root.rotation.y=Math.atan2(rx,rz);
  updatePlayerVisual(rival,dt,rd>.8);
- // Teammates keep width and offer passing lanes around the ball carrier.
+ // Teammates roam across the pitch and make decisions from the live play,
+ // instead of returning to fixed "left/right lane" coordinates.
  teammates.forEach((mate,i)=>{
   const side=i===0?-1:1;
-  const tx=clamp(player.root.position.x+3.5,-25,23);
-  const tz=clamp(player.root.position.z+side*7,-15,15);
+  const carrier=ball.owner==='player'?player.root:ball;
+  const phase=state.elapsed*.72+i*2.4;
+  const spaceX=Math.sin(phase)*5.2;
+  const spaceZ=Math.cos(phase*1.17)*5.8;
+  let tx,tz;
+  if(ball.owner==='player'){
+   // Offer moving support at different depths and angles around the carrier.
+   tx=player.root.position.x+2.5+spaceX;
+   tz=player.root.position.z+side*3.2+spaceZ*.62;
+  }else{
+   // When possession is loose or with the opponent, move toward the action
+   // while spreading naturally instead of holding a preset formation.
+   tx=carrier.x+side*2.8+spaceX*.55;
+   tz=carrier.z+side*2.4+spaceZ;
+  }
+  tx=clamp(tx,-27,27);tz=clamp(tz,-16,16);
   const mx=tx-mate.root.position.x,mz=tz-mate.root.position.z,md=Math.hypot(mx,mz)||1;
-  mate.root.position.x+=mx/md*5.1*dt;mate.root.position.z+=mz/md*5.1*dt;
-  mate.root.rotation.y=Math.atan2(mx,mz);updatePlayerVisual(mate,dt,md>.7);
+  const speed=ball.owner==='player'?5.8:6.3;
+  const step=Math.min(md,speed*dt);
+  mate.root.position.x+=mx/md*step;mate.root.position.z+=mz/md*step;
+  if(md>.25)mate.root.rotation.y=Math.atan2(mx,mz);
+  updatePlayerVisual(mate,dt,md>.7);
  });
- // Extra defenders close passing lanes; they press the ball when it enters their half.
+ // Defenders have independent decisions: the closest one pressures the ball,
+ // while the other tracks the developing attack and can move anywhere on the field.
+ const defenderDistances=opponents.map(enemy=>Math.hypot(ball.x-enemy.root.position.x,ball.z-enemy.root.position.z));
+ const pressingIndex=defenderDistances[0]<=defenderDistances[1]?0:1;
  opponents.forEach((enemy,i)=>{
-  const side=i===0?-1:1;
-  const tx=ball.owner==='rival'?clamp(ball.x+4,-24,25):clamp(Math.max(4,ball.x+2),5,25);
-  const tz=clamp(ball.z+side*4,-15,15);
+  let tx,tz;
+  if(i===pressingIndex){
+   // Closest defender actively hunts the ball, regardless of field position.
+   tx=ball.x+(ball.owner==='rival'?-1.1:0);
+   tz=ball.z;
+  }else{
+   // Second defender covers the player/ball passing route and keeps moving,
+   // with a small roaming offset so it does not stand on a rigid defensive line.
+   const coverTarget=ball.owner==='player'?player.root.position:ball;
+   const phase=state.elapsed*.58+i*2.8;
+   tx=coverTarget.x-1.8+Math.sin(phase)*3.8;
+   tz=coverTarget.z+Math.cos(phase*1.13)*4.8;
+  }
+  tx=clamp(tx,-27,27);tz=clamp(tz,-16,16);
   const ex=tx-enemy.root.position.x,ez=tz-enemy.root.position.z,ed=Math.hypot(ex,ez)||1;
-  enemy.root.position.x+=ex/ed*5.4*dt;enemy.root.position.z+=ez/ed*5.4*dt;
-  enemy.root.rotation.y=Math.atan2(ex,ez);updatePlayerVisual(enemy,dt,ed>.7);
+  const speed=i===pressingIndex?6.4:5.7;
+  const step=Math.min(ed,speed*dt);
+  enemy.root.position.x+=ex/ed*step;enemy.root.position.z+=ez/ed*step;
+  if(ed>.25)enemy.root.rotation.y=Math.atan2(ex,ez);
+  updatePlayerVisual(enemy,dt,ed>.7);
  });
  if(ball.owner==='player'){
   const a=player.root.rotation.y;
