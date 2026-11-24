@@ -1,6 +1,16 @@
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-
-(() => {
+const THREE_URL='https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+(async()=>{
+let THREE;
+try{
+  THREE=await import(THREE_URL);
+}catch(error){
+  console.error('Three.js failed to load:',error);
+  const note=document.getElementById('rotateNote');
+  note.style.display='grid';
+  note.style.zIndex='10';
+  note.textContent='Не удалось загрузить 3D-графику. Проверь интернет и обнови страницу.';
+  return;
+}
 const canvas=document.getElementById('pitch');
 const overlay=document.getElementById('overlay');
 const startBtn=document.getElementById('startBtn');
@@ -188,8 +198,18 @@ function resetPositions(){
 }
 function render(){renderer.render(scene,camera)}
 function resize(){
- const w=window.innerWidth,h=window.innerHeight;
- renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();
+ const w=window.innerWidth,h=window.innerHeight,aspect=w/h;
+ renderer.setSize(w,h,false);
+ camera.aspect=aspect;
+ if(aspect<1){
+  camera.fov=58;
+  camera.position.set(0,34,43);
+ }else{
+  camera.fov=43;
+  camera.position.set(0,24,31);
+ }
+ camera.updateProjectionMatrix();
+ camera.lookAt(0,0,0);
 }
 window.addEventListener('resize',resize,{passive:true});resize();
 function frame(now){
@@ -205,39 +225,33 @@ function start(){
 }
 startBtn.addEventListener('click',start);
 const joy=document.getElementById('joystick'),knob=document.getElementById('joyKnob');
-let pointer=null,touchActive=false;
+let pointer=null;
 function setStick(clientX,clientY){
  const r=joy.getBoundingClientRect();
- const cx=r.left+r.width/2,cy=r.top+r.height/2,max=Math.max(20,r.width*.31);
+ const cx=r.left+r.width/2,cy=r.top+r.height/2,max=Math.max(20,Math.min(r.width,r.height)*.31);
  let dx=clientX-cx,dz=clientY-cy,len=Math.hypot(dx,dz);
  if(len>max){dx=dx/len*max;dz=dz/len*max}
  input.x=dx/max;input.z=dz/max;
  knob.style.transform='translate3d('+dx+'px,'+dz+'px,0)';
 }
 function resetStick(){
- pointer=null;touchActive=false;input.x=0;input.z=0;
+ pointer=null;input.x=0;input.z=0;
  knob.style.transform='translate3d(0,0,0)';
 }
 joy.addEventListener('pointerdown',e=>{
- e.preventDefault();pointer=e.pointerId;setStick(e.clientX,e.clientY);
- if(joy.setPointerCapture){try{joy.setPointerCapture(pointer)}catch(_){}}
+ e.preventDefault();
+ pointer=e.pointerId;
+ setStick(e.clientX,e.clientY);
+ try{joy.setPointerCapture(e.pointerId)}catch(_){}
 });
 window.addEventListener('pointermove',e=>{
- if(pointer!==e.pointerId)return;e.preventDefault();setStick(e.clientX,e.clientY);
+ if(pointer!==e.pointerId)return;
+ e.preventDefault();
+ setStick(e.clientX,e.clientY);
 },{passive:false});
 window.addEventListener('pointerup',e=>{if(pointer===e.pointerId)resetStick()});
 window.addEventListener('pointercancel',e=>{if(pointer===e.pointerId)resetStick()});
-// Touch fallback for mobile browsers where pointer capture is unreliable.
-joy.addEventListener('touchstart',e=>{
- e.preventDefault();touchActive=true;
- const t=e.changedTouches[0];if(t)setStick(t.clientX,t.clientY);
-},{passive:false});
-joy.addEventListener('touchmove',e=>{
- if(!touchActive)return;e.preventDefault();
- const t=e.touches[0];if(t)setStick(t.clientX,t.clientY);
-},{passive:false});
-joy.addEventListener('touchend',e=>{if(touchActive){e.preventDefault();resetStick()}},{passive:false});
-joy.addEventListener('touchcancel',resetStick,{passive:true});
+joy.addEventListener('lostpointercapture',()=>{if(pointer!==null)resetStick()});
 const sprint=document.getElementById('sprintBtn');
 sprint.addEventListener('pointerdown',e=>{e.preventDefault();input.sprint=true});
 ['pointerup','pointercancel','pointerleave'].forEach(ev=>sprint.addEventListener(ev,()=>input.sprint=false));
