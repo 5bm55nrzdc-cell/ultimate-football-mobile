@@ -194,6 +194,42 @@ ballShadow.rotation.x=-Math.PI/2;ballShadow.position.y=.025;scene.add(ballShadow
 const ball={x:-5.8,z:0,vx:0,vz:0,owner:null,height:.31,spin:0};
 const state={running:false,last:0,elapsed:0,home:0,away:0};
 const input={x:0,z:0,sprint:false};
+let tackleCooldown=0;
+const goalFlash={until:0};
+function scoreGoal(side){
+ if(goalFlash.until>state.elapsed)return;
+ goalFlash.until=state.elapsed+1.2;
+ if(side==='home')state.home++;else state.away++;
+ homeEl.textContent=state.home;awayEl.textContent=state.away;
+ resetPositions();
+}
+function tryTackle(){
+ if(tackleCooldown>0)return;
+ tackleCooldown=.48;
+ const d=dist(player,ball);
+ if(ball.owner==='rival'&&d<2.15){
+  const px=player.root.position.x,pz=player.root.position.z;
+  const rx=rival.root.position.x,rz=rival.root.position.z;
+  const facing=Math.hypot(px-rx,pz-rz)||1;
+  // A successful close challenge knocks the ball loose toward the player's feet.
+  ball.owner='player';ball.vx=0;ball.vz=0;
+  ball.x=px+(rx-px)/facing*.48;ball.z=pz+(rz-pz)/facing*.48;
+ }else if(!ball.owner&&d<1.9){
+  ball.owner='player';ball.vx=0;ball.vz=0;
+ }else if(ball.owner==='player'){
+  // No accidental self-tackle: keep possession.
+  return;
+ }
+}
+function checkGoal(){
+ // Goal mouths are 4.5 m wide and 2.5 m high; the ball must fully cross the line.
+ if(Math.abs(ball.x)>17.18&&Math.abs(ball.z)<2.08&&ball.height<2.35){
+  scoreGoal(ball.x>0?'home':'away');
+  return true;
+ }
+ return false;
+}
+
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const dist=(a,b)=>{const ax=a.root?a.root.position.x:a.x,az=a.root?a.root.position.z:a.z;return Math.hypot(ax-b.x,az-b.z)};
 function updatePlayerVisual(p,dt,moving){
@@ -206,6 +242,7 @@ function updatePlayerVisual(p,dt,moving){
  p.root.position.y=moving?Math.abs(Math.sin(p.phase*2))*.045:0;
 }
 function update(dt){
+ tackleCooldown=Math.max(0,tackleCooldown-dt);
  const magnitude=Math.hypot(input.x,input.z);
  let moving=false;
  if(magnitude>.08){
@@ -240,15 +277,32 @@ function update(dt){
   if(Math.hypot(ball.vx,ball.vz)<.08)ball.vx=ball.vz=0;
   ball.height=.31+Math.abs(Math.sin(state.elapsed*9))*Math.min(.2,Math.hypot(ball.vx,ball.vz)*.012);
   if(Math.abs(ball.z)>9.8){ball.z=clamp(ball.z,-9.8,9.8);ball.vz*=-.68}
-  if(Math.abs(ball.x)>17.35&&Math.abs(ball.z)<2.15){
-   if(ball.x<0)state.away++;else state.home++;
-   homeEl.textContent=state.home;awayEl.textContent=state.away;
-   resetPositions();
-  }else if(Math.abs(ball.x)>16.7){ball.x=clamp(ball.x,-16.7,16.7);ball.vx*=-.65}
+  // Goal-line and post collisions are resolved below after ball integration.
+  if(Math.abs(ball.x)>17.8&&Math.abs(ball.z)>2.15){ball.x=clamp(ball.x,-17.8,17.8);ball.vx*=-.55}
+  if(Math.abs(ball.x)>17.8&&Math.abs(ball.z)<2.15&&ball.height>=2.35){ball.x=clamp(ball.x,-17.8,17.8);ball.vx*=-.55}
   if(dist(player,ball)<.95&&Math.hypot(ball.vx,ball.vz)<5)ball.owner='player';
   if(dist(rival,ball)<.88){ball.owner='rival';ball.vx=ball.vz=0}
  }
- if(Math.abs(ball.x)>17.35&&Math.abs(ball.z)<2.15){if(ball.x<0)state.away++;else state.home++;homeEl.textContent=state.home;awayEl.textContent=state.away;resetPositions();}
+
+ // Goal frame collision: posts and crossbar deflect shots that miss the opening.
+ if(Math.abs(Math.abs(ball.x)-17)<.34){
+  for(const postZ of [-2.25,2.25]){
+   const d=Math.hypot(ball.x-Math.sign(ball.x)*17,ball.z-postZ);
+   if(d<.43&&ball.height<2.65){
+    const nx=(ball.x-Math.sign(ball.x)*17)/(d||1),nz=(ball.z-postZ)/(d||1);
+    const dot=ball.vx*nx+ball.vz*nz;
+    if(dot<0){ball.vx-=1.55*dot*nx;ball.vz-=1.55*dot*nz;}
+   }
+  }
+  if(Math.abs(ball.z)<2.25&&Math.abs(ball.height-2.5)<.38){
+   ball.height=2.13;ball.vx*=-.55;ball.vz*=.82;
+  }
+ }
+ if(checkGoal())return;
+ // Back net: absorb the ball after it crosses into the goal.
+ if(Math.abs(ball.x)>18.7&&Math.abs(ball.z)<2.2&&ball.height<2.4){
+  ball.x=Math.sign(ball.x)*18.7;ball.vx=0;ball.vz*=.45;
+ }
  ballGroup.position.set(ball.x,ball.height,ball.z);
  ballMesh.rotation.x+=ball.vz*dt*1.4;ballMesh.rotation.z-=ball.vx*dt*1.4;
  ballShadow.position.x=ball.x;ballShadow.position.z=ball.z;
@@ -325,13 +379,19 @@ function kick(type){
  if(ball.owner!=='player'&&dist(player,ball)>1.35)return;
  ball.owner=null;
  let dx,dz,power;
- if(type==='shoot'){dx=17.5-ball.x;dz=-ball.z*.45;power=17.5}
+ if(type==='shoot'){
+  const goalX=ball.x<0?17.5:-17.5;
+  dx=goalX-ball.x;dz=-ball.z*.28;power=19.5;
+ }
  else if(Math.hypot(input.x,input.z)>.2){dx=input.x;dz=input.z;power=10.5}
  else{dx=player.dx;dz=player.dz;power=10.5}
  const len=Math.hypot(dx,dz)||1;ball.vx=dx/len*power;ball.vz=dz/len*power;ball.height=.38;
 }
 document.getElementById('passBtn').addEventListener('pointerdown',e=>{e.preventDefault();kick('pass')});
 document.getElementById('shootBtn').addEventListener('pointerdown',e=>{e.preventDefault();kick('shoot')});
+const tackleBtn=document.getElementById('tackleBtn');
+tackleBtn.addEventListener('pointerdown',e=>{e.preventDefault();tryTackle()});
+tackleBtn.addEventListener('click',tryTackle);
 window.addEventListener('keydown',e=>{
  const keys={ArrowLeft:'left',a:'left',ArrowRight:'right',d:'right',ArrowUp:'up',w:'up',ArrowDown:'down',s:'down'};
  const k=keys[e.key];if(!k)return;e.preventDefault();
