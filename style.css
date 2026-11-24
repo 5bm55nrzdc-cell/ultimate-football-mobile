@@ -35,3 +35,15 @@
 .tackle{background:linear-gradient(145deg,#d85a63,#8d1e36);width:clamp(58px,10vh,78px);height:clamp(58px,10vh,78px);margin-bottom:5px;border-color:#ffd4d8}
 @media(max-height:500px){.tackle{width:48px;height:48px;margin-bottom:2px}}
 @media(orientation:portrait){.action-buttons{max-width:58vw}.tackle{width:54px;height:54px;margin-bottom:3px}}
+
+/* eFootball-inspired mobile control layout */
+.hud{pointer-events:none}.camera-toggle{pointer-events:auto;border:1px solid #d9f6bd99;border-radius:18px;background:#071b13dd;color:#eaffd7;padding:7px 10px;font-size:clamp(8px,1.4vw,11px);font-weight:900;letter-spacing:.35px;box-shadow:0 3px 12px #0008;max-width:132px}
+.mobile-controls{align-items:flex-end}.action-buttons{position:relative;display:block;width:clamp(180px,30vw,250px);height:clamp(145px,26vh,190px);max-width:none;flex:none}
+.action{position:absolute;display:grid;place-items:center;border:2px solid #ffffffb8;border-radius:50%;font-weight:1000;box-shadow:0 5px 14px #0009,inset 0 2px 5px #ffffff30;text-shadow:0 1px 3px #000c;backdrop-filter:blur(7px)}
+.pass{left:4px;bottom:8px;margin:0;width:clamp(60px,9vh,76px);height:clamp(60px,9vh,76px);background:radial-gradient(circle at 32% 25%,#75d9bd,#08785d 72%)}
+.shoot{right:0;bottom:4px;margin:0;width:clamp(82px,13vh,108px);height:clamp(82px,13vh,108px);background:radial-gradient(circle at 32% 25%,#ffd27b,#e36a24 72%);font-size:clamp(11px,1.8vw,15px)}
+.tackle{right:20px;top:0;margin:0;width:clamp(58px,9vh,74px);height:clamp(58px,9vh,74px);background:radial-gradient(circle at 32% 25%,#f28a91,#a51f3d 72%)}
+.sprint{left:8px;top:0;margin:0;width:clamp(58px,9vh,74px);height:clamp(58px,9vh,74px);background:radial-gradient(circle at 32% 25%,#79baff,#205bb5 72%)}
+.action:active{filter:brightness(1.25);transform:scale(.93)}
+@media(orientation:portrait){.camera-toggle{font-size:8px;padding:6px 7px;max-width:105px}.action-buttons{width:180px;height:150px}.pass{width:58px;height:58px}.shoot{width:76px;height:76px}.tackle,.sprint{width:54px;height:54px}}
+@media(orientation:landscape) and (max-height:500px){.action-buttons{width:190px;height:130px}.pass{width:52px;height:52px}.shoot{width:68px;height:68px}.tackle,.sprint{width:48px;height:48px}}
