@@ -226,6 +226,7 @@ const ball={x:-10.8,z:0,vx:0,vz:0,owner:null,height:.31,spin:0};
 const state={running:false,last:0,elapsed:0,home:0,away:0};
 const input={x:0,z:0,sprint:false};
 let cameraMode='behind';
+let cameraYaw=0;
 const cameraBtn=document.getElementById('cameraBtn');
 let tackleCooldown=0;
 const goalFlash={until:0};
@@ -279,11 +280,18 @@ function update(dt){
  const magnitude=Math.hypot(input.x,input.z);
  let moving=false;
  if(magnitude>.08){
-  // Screen-relative controls: joystick up always means forward on screen.
-  // A stable trailing camera prevents the controls from drifting as the player turns.
+  // Chase mode uses camera-relative movement; side mode keeps its old controls.
   const sideView=cameraMode==='side';
-  let dx=input.x/magnitude;
-  let dz=(sideView?input.z:-input.z)/magnitude;
+  let dx,dz;
+  if(sideView){
+   dx=input.x/magnitude;
+   dz=input.z/magnitude;
+  }else{
+   const forward=-input.z/magnitude;
+   const right=input.x/magnitude;
+   dx=right*Math.cos(cameraYaw)+forward*Math.sin(cameraYaw);
+   dz=-right*Math.sin(cameraYaw)+forward*Math.cos(cameraYaw);
+  }
   const worldLength=Math.hypot(dx,dz)||1;
   dx/=worldLength;dz/=worldLength;
   player.dx=dx;player.dz=dz;
@@ -399,18 +407,24 @@ function update(dt){
  ballMesh.rotation.x+=ball.vz*dt*1.4;ballMesh.rotation.z-=ball.vx*dt*1.4;
  ballShadow.position.x=ball.x;ballShadow.position.z=ball.z;
  ballShadow.scale.setScalar(1-Math.min(.35,ball.height*.22));
- // Player-follow camera looks toward the ball; side mode gives a broadcast view.
+ // True third-person chase camera: steady while moving, then settles behind
+ // the direction the player is facing.
  const px=player.root.position.x,pz=player.root.position.z,bx=ball.x,bz=ball.z;
  if(cameraMode==='behind'){
-  // Close, lower third-person chase camera. Keep the player central and
-  // only let the ball gently influence framing so the view does not swing.
-  const desiredX=px,desiredZ=pz-8.2;
-  const follow=1-Math.exp(-dt*5.5);
+  if(magnitude<=.08){
+   const targetYaw=player.root.rotation.y;
+   const angleDelta=Math.atan2(Math.sin(targetYaw-cameraYaw),Math.cos(targetYaw-cameraYaw));
+   cameraYaw+=angleDelta*(1-Math.exp(-dt*3.2));
+  }
+  const distance=7.6;
+  const desiredX=px-Math.sin(cameraYaw)*distance;
+  const desiredZ=pz-Math.cos(cameraYaw)*distance;
+  const follow=1-Math.exp(-dt*5.2);
   camera.position.x+=(desiredX-camera.position.x)*follow;
-  camera.position.y+=(6.2-camera.position.y)*(1-Math.exp(-dt*3.8));
+  camera.position.y+=(5.4-camera.position.y)*(1-Math.exp(-dt*3.4));
   camera.position.z+=(desiredZ-camera.position.z)*follow;
-  const aimX=px*.82+bx*.18;
-  const aimZ=pz*.82+bz*.18;
+  const aimX=px+Math.sin(cameraYaw)*3.2;
+  const aimZ=pz+Math.cos(cameraYaw)*3.2;
   camera.lookAt(aimX,1.15,aimZ);
  }else{
   const centerX=px*.42+bx*.58;
