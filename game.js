@@ -13,7 +13,18 @@ try{
 }
 const canvas=document.getElementById('pitch');
 const overlay=document.getElementById('overlay');
-const startBtn=document.getElementById('startBtn');
+const playBtn=document.getElementById('playBtn');
+const trainingBtn=document.getElementById('trainingBtn');
+const profileBtn=document.getElementById('profileBtn');
+const settingsBtn=document.getElementById('settingsBtn');
+const trainingOverlay=document.getElementById('trainingOverlay');
+const trainingProgress=document.getElementById('trainingProgress');
+const trainingTitle=document.getElementById('trainingTitle');
+const trainingText=document.getElementById('trainingText');
+const trainingTip=document.getElementById('trainingTip');
+const trainingNextBtn=document.getElementById('trainingNextBtn');
+const trainingBackBtn=document.getElementById('trainingBackBtn');
+const menuMessage=document.getElementById('menuMessage');
 const clockEl=document.getElementById('clock');
 const homeEl=document.getElementById('homeScore');
 const awayEl=document.getElementById('awayScore');
@@ -393,9 +404,41 @@ function frame(now){
 }
 function start(){
  if(state.running)return;
- state.running=true;overlay.classList.add('hidden');state.last=performance.now();requestAnimationFrame(frame);
+ trainingOverlay.classList.add('hidden');
+ overlay.classList.add('hidden');
+ state.running=true;state.last=performance.now();requestAnimationFrame(frame);
 }
-startBtn.addEventListener('click',start);
+playBtn.addEventListener('click',start);
+
+const lessons=[
+ {title:'ДВИЖЕНИЕ',text:'Передвигай футболиста левым джойстиком. Толкай его в ту сторону, куда хочешь бежать.',tip:'На телефоне: удерживай джойстик и плавно меняй направление. Отпусти, чтобы остановиться.'},
+ {title:'РЫВОК',text:'Используй кнопку «РЫВОК», чтобы ускориться и быстрее добраться до мяча.',tip:'Не держи ускорение постоянно: используй его на свободном пространстве.'},
+ {title:'ВЕДЕНИЕ МЯЧА',text:'Подойди к мячу — игрок подберёт его. Двигайся с мячом, меняй направление и освобождайся от соперника.',tip:'Старайся не бежать прямо на защитника. Меняй направление заранее.'},
+ {title:'ПАС',text:'Нажми «ПАС», чтобы отправить мяч партнёру по команде.',tip:'Перед пасом посмотри, где находится партнёр. Не отдавай мяч прямо сопернику.'},
+ {title:'УДАР',text:'Когда окажешься рядом с мячом, нажми «УДАР». Целься в ворота соперника.',tip:'Подойди к мячу и выбери момент для удара.'},
+ {title:'ОТБОР',text:'Когда соперник владеет мячом, приблизься к нему и нажми «ОТБОР».',tip:'Подходи к сопернику на небольшую дистанцию. Теперь ты готов к матчу!'}
+];
+let lessonIndex=0;
+function showLesson(){
+ const lesson=lessons[lessonIndex];
+ trainingProgress.textContent='УРОК '+(lessonIndex+1)+' ИЗ '+lessons.length;
+ trainingTitle.textContent=lesson.title;
+ trainingText.textContent=lesson.text;
+ trainingTip.textContent=lesson.tip;
+ trainingNextBtn.textContent=lessonIndex===lessons.length-1?'ЗАВЕРШИТЬ':'ДАЛЕЕ';
+}
+function openTraining(){
+ lessonIndex=0;showLesson();trainingOverlay.classList.remove('hidden');
+}
+trainingBtn.addEventListener('click',openTraining);
+trainingNextBtn.addEventListener('click',()=>{
+ if(lessonIndex<lessons.length-1){lessonIndex++;showLesson();return;}
+ trainingOverlay.classList.add('hidden');
+ menuMessage.textContent='Обучение пройдено · Отличная работа!';
+});
+trainingBackBtn.addEventListener('click',()=>trainingOverlay.classList.add('hidden'));
+profileBtn.addEventListener('click',()=>{menuMessage.textContent='Ты играешь как гость. Сохранение аккаунта появится после подключения защищённой авторизации.';});
+settingsBtn.addEventListener('click',()=>{menuMessage.textContent='Настройки управления и звука добавим следующим этапом.';});
 const joy=document.getElementById('joystick'),knob=document.getElementById('joyKnob');
 let pointer=null;
 function setStick(clientX,clientY){
