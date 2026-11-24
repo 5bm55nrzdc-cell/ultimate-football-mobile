@@ -234,7 +234,7 @@ function tryTackle(){
 }
 function checkGoal(){
  // Goal mouths are 4.5 m wide and 2.5 m high; the ball must fully cross the line.
- if(Math.abs(ball.x)>28.85&&Math.abs(ball.z)<2.28&&ball.height<2.35){
+ if(Math.abs(ball.x)>28.85&&Math.abs(ball.z)<2.458&&ball.height<2.35){
   scoreGoal(ball.x>0?'home':'away');
   return true;
  }
@@ -307,8 +307,8 @@ function update(dt){
   ball.height=.31+Math.abs(Math.sin(state.elapsed*9))*Math.min(.2,Math.hypot(ball.vx,ball.vz)*.012);
   if(Math.abs(ball.z)>17.8){ball.z=clamp(ball.z,-17.8,17.8);ball.vz*=-.68}
   // Goal-line and post collisions are resolved below after ball integration.
-  if(Math.abs(ball.x)>29.8&&Math.abs(ball.z)>2.15){ball.x=clamp(ball.x,-29.8,29.8);ball.vx*=-.55}
-  if(Math.abs(ball.x)>17.8&&Math.abs(ball.z)<2.15&&ball.height>=2.35){ball.x=clamp(ball.x,-17.8,17.8);ball.vx*=-.55}
+  if(Math.abs(ball.x)>29.8&&Math.abs(ball.z)>2.5){ball.x=clamp(ball.x,-29.8,29.8);ball.vx*=-.55}
+  if(Math.abs(ball.x)>29.8&&Math.abs(ball.z)<2.5&&ball.height>=2.35){ball.x=clamp(ball.x,-29.8,29.8);ball.vx*=-.55}
   if(dist(player,ball)<.95&&Math.hypot(ball.vx,ball.vz)<5)ball.owner='player';
   if(dist(rival,ball)<.88){ball.owner='rival';ball.vx=ball.vz=0}
  }
@@ -329,7 +329,7 @@ function update(dt){
  }
  if(checkGoal())return;
  // Back net: absorb the ball after it crosses into the goal.
- if(Math.abs(ball.x)>30.7&&Math.abs(ball.z)<2.2&&ball.height<2.4){
+ if(Math.abs(ball.x)>30.7&&Math.abs(ball.z)<2.45&&ball.height<2.4){
   ball.x=Math.sign(ball.x)*30.7;ball.vx=0;ball.vz*=.45;
  }
  ballGroup.position.set(ball.x,ball.height,ball.z);
@@ -409,7 +409,7 @@ function kick(type){
  ball.owner=null;
  let dx,dz,power;
  if(type==='shoot'){
-  const goalX=ball.x<0?17.5:-17.5;
+  const goalX=ball.x<0?29.5:-29.5;
   dx=goalX-ball.x;dz=-ball.z*.28;power=19.5;
  }
  else if(Math.hypot(input.x,input.z)>.2){dx=input.x;dz=input.z;power=10.5}
