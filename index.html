@@ -18,16 +18,30 @@
     <canvas id="pitch" width="1200" height="720" aria-label="Футбольное поле"></canvas>
     <div class="overlay" id="overlay">
     <div class="start-card main-menu" id="mainMenu">
-      <div class="ball-icon">⚽</div><p class="eyebrow">ULTIMATE FOOTBALL MOBILE</p>
-      <h1>ГЛАВНОЕ МЕНЮ</h1><p class="menu-subtitle">Твой путь к футбольной славе начинается здесь</p>
-      <div class="menu-buttons">
-        <button id="playBtn">ИГРАТЬ</button>
-        <button class="secondary-menu-btn" id="trainingBtn">ОБУЧЕНИЕ</button>
-        <button class="secondary-menu-btn" id="profileBtn">ПРОФИЛЬ: ГОСТЬ</button>
-        <button class="secondary-menu-btn" id="settingsBtn">НАСТРОЙКИ</button>
+      <div class="menu-topline">
+        <div class="menu-brand"><span class="brand-mark">U</span><span>ULTIMATE<br><b>FOOTBALL</b></span></div>
+        <span class="season-label">SEASON 01 <i></i> MOBILE</span>
       </div>
-      <p class="menu-footnote" id="menuMessage">Режим 3 на 3 · Локальный профиль</p>
-    </div>
+      <div class="menu-layout">
+        <nav class="menu-navigation" aria-label="Главное меню">
+          <p class="menu-kicker">ГЛАВНОЕ МЕНЮ</p>
+          <button id="playBtn"><span class="nav-number">01</span><span>ИГРАТЬ</span><span class="nav-arrow">›</span></button>
+          <button class="secondary-menu-btn" id="trainingBtn"><span class="nav-number">02</span><span>АКАДЕМИЯ</span><span class="nav-arrow">›</span></button>
+          <button class="secondary-menu-btn" id="profileBtn"><span class="nav-number">03</span><span>МОЙ ПРОФИЛЬ</span><span class="nav-arrow">›</span></button>
+          <button class="secondary-menu-btn" id="settingsBtn"><span class="nav-number">04</span><span>НАСТРОЙКИ</span><span class="nav-arrow">›</span></button>
+        </nav>
+        <section class="menu-feature">
+          <div class="feature-orbit"></div>
+          <div class="feature-top"><span class="live-dot"></span> ТВОЯ ФУТБОЛЬНАЯ ИСТОРИЯ</div>
+          <div class="feature-art"><span class="feature-ball">⚽</span><span class="feature-lines"></span></div>
+          <p class="feature-overline">ВЫХОДИ НА ПОЛЕ</p>
+          <h1>ТВОЯ ИГРА.<br><em>ТВОИ ПРАВИЛА.</em></h1>
+          <p class="menu-subtitle">Создай моменты, забивай голы и веди свою команду к победе.</p>
+          <div class="feature-meta"><span><b>3 × 3</b> ФОРМАТ МАТЧА</span><span><b>90</b> МИНУТ ФУТБОЛА</span></div>
+        </section>
+      </div>
+      <div class="menu-bottomline"><span id="menuMessage">ГОСТЕВОЙ ПРОФИЛЬ · ЛОКАЛЬНАЯ ИГРА</span><span>ULTIMATE FOOTBALL <b>© 2026</b></span></div>
+    </div>iv>
   </div>
   <div class="auth-overlay hidden" id="authOverlay">
     <div class="auth-card">
