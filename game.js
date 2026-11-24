@@ -41,7 +41,7 @@ const scene=new THREE.Scene();
 scene.background=new THREE.Color(0x8fc5d2);
 scene.fog=new THREE.Fog(0x8fc5d2,58,125);
 const camera=new THREE.PerspectiveCamera(43,1,.1,150);
-camera.position.set(0,38,48);
+camera.position.set(0,30,40);
 camera.lookAt(0,0,0);
 const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});
 renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.7));
@@ -367,12 +367,16 @@ function update(dt){
  // Player-follow camera looks toward the ball; side mode gives a broadcast view.
  const px=player.root.position.x,pz=player.root.position.z,bx=ball.x,bz=ball.z;
  if(cameraMode==='behind'){
-  // Follow from a stable field direction instead of orbiting around the player.
-  const desiredX=px,desiredZ=pz-11;
-  camera.position.x+=(desiredX-camera.position.x)*Math.min(1,dt*3.2);
-  camera.position.y+=(10.5-camera.position.y)*Math.min(1,dt*2.2);
-  camera.position.z+=(desiredZ-camera.position.z)*Math.min(1,dt*3.2);
-  camera.lookAt(px*.42+bx*.58,.65,pz*.42+bz*.58);
+  // Close, lower third-person chase camera. Keep the player central and
+  // only let the ball gently influence framing so the view does not swing.
+  const desiredX=px,desiredZ=pz-8.2;
+  const follow=1-Math.exp(-dt*5.5);
+  camera.position.x+=(desiredX-camera.position.x)*follow;
+  camera.position.y+=(6.2-camera.position.y)*(1-Math.exp(-dt*3.8));
+  camera.position.z+=(desiredZ-camera.position.z)*follow;
+  const aimX=px*.82+bx*.18;
+  const aimZ=pz*.82+bz*.18;
+  camera.lookAt(aimX,1.15,aimZ);
  }else{
   const centerX=px*.42+bx*.58;
   camera.position.x+=(centerX*.28-camera.position.x)*Math.min(1,dt*1.7);
@@ -393,10 +397,10 @@ function resize(){
  renderer.setSize(w,h,false);
  camera.aspect=aspect;
  if(aspect<1){
-  camera.fov=62;
-  camera.position.set(0,44,56);
+  camera.fov=68;
+  camera.position.set(0,32,42);
  }else{
-  camera.fov=52;
+  camera.fov=47;
   camera.position.set(0,38,48);
  }
  camera.updateProjectionMatrix();
