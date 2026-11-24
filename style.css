@@ -47,3 +47,23 @@
 .action:active{filter:brightness(1.25);transform:scale(.93)}
 @media(orientation:portrait){.camera-toggle{font-size:8px;padding:6px 7px;max-width:105px}.action-buttons{width:180px;height:150px}.pass{width:58px;height:58px}.shoot{width:76px;height:76px}.tackle,.sprint{width:54px;height:54px}}
 @media(orientation:landscape) and (max-height:500px){.action-buttons{width:190px;height:130px}.pass{width:52px;height:52px}.shoot{width:68px;height:68px}.tackle,.sprint{width:48px;height:48px}}
+
+
+/* Main menu and football academy */
+.main-menu{width:min(92vw,430px);padding:clamp(20px,4vh,34px)}
+.menu-subtitle{font-size:13px;line-height:1.45;margin:8px 0 18px}
+.menu-buttons{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
+.menu-buttons button{width:100%;min-height:48px;margin:0;padding:12px 10px;font-size:clamp(10px,2.5vw,13px)}
+.menu-buttons #playBtn{grid-column:1/-1;min-height:56px;font-size:15px}
+.secondary-menu-btn{background:linear-gradient(145deg,#315744,#173425)!important;color:#efffe9!important;border:1px solid #a9d99b!important;box-shadow:inset 0 1px 0 #ffffff22,0 4px 12px #0005!important}
+.menu-footnote{font-size:10px!important;color:#9eb9a4!important;margin:16px 0 0!important}
+.training-overlay{position:absolute;inset:0;z-index:7;display:grid;place-items:center;padding:18px;background:#031009eF;backdrop-filter:blur(9px)}
+.training-overlay.hidden{display:none}
+.training-card{width:min(92vw,460px);padding:clamp(22px,4vh,34px);border:1px solid #c5ff8a88;border-radius:20px;background:linear-gradient(145deg,#183e2d,#06180f);box-shadow:0 24px 90px #000b;text-align:center}
+.training-card h2{font-size:clamp(25px,6vw,38px);margin:10px 0}
+.training-card>p:not(.eyebrow){line-height:1.55;color:#e0eee1;font-size:15px;min-height:48px}
+.training-progress{margin-top:14px;color:#baf36d;font-size:11px;font-weight:900;letter-spacing:1.5px}
+.training-tip{margin:18px 0;padding:13px;border-radius:12px;background:#baf36d16;border:1px solid #baf36d55;color:#dfffca;font-size:13px;line-height:1.45}
+.training-actions{display:flex;gap:10px}
+.training-actions button{flex:1;min-height:46px;margin:0;padding:10px;font-size:11px}
+@media(max-width:360px){.menu-buttons{grid-template-columns:1fr}.menu-buttons #playBtn{grid-column:auto}}
