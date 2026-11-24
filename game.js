@@ -287,10 +287,17 @@ function update(dt){
    dx=input.x/magnitude;
    dz=input.z/magnitude;
   }else{
-   const forward=-input.z/magnitude;
-   const right=input.x/magnitude;
-   dx=right*Math.cos(cameraYaw)+forward*Math.sin(cameraYaw);
-   dz=-right*Math.sin(cameraYaw)+forward*Math.cos(cameraYaw);
+   // Use the camera's real horizontal viewing basis. The previous yaw-based
+   // formula used the opposite screen-right direction in the behind-player
+   // view, so dragging left could move the footballer right.
+   const forwardInput=-input.z/magnitude;
+   const rightInput=input.x/magnitude;
+   const viewForward=camera.getWorldDirection(new THREE.Vector3());
+   viewForward.y=0;
+   viewForward.normalize();
+   const viewRight=new THREE.Vector3().crossVectors(viewForward,new THREE.Vector3(0,1,0)).normalize();
+   dx=viewRight.x*rightInput+viewForward.x*forwardInput;
+   dz=viewRight.z*rightInput+viewForward.z*forwardInput;
   }
   const worldLength=Math.hypot(dx,dz)||1;
   dx/=worldLength;dz/=worldLength;
