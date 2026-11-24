@@ -86,3 +86,5 @@
 .auth-status{min-height:34px;color:#baf36d;font-size:11px;line-height:1.4;margin:14px 0}
 .auth-footer button{width:100%}
 @media(max-width:360px){.auth-methods{grid-template-columns:1fr}.auth-form-actions{grid-template-columns:1fr}}
+
+.auth-methods.hidden,.auth-form input.hidden,.auth-form-actions button.hidden{display:none!important}
