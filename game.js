@@ -336,16 +336,21 @@ function update(dt){
   updatePlayerVisual(rival,dt,rd>.65);
   const mateDistances=teammates.map(m=>Math.hypot(m.root.position.x-ball.x,m.root.position.z-ball.z));
   const looseMateIndex=mateDistances.indexOf(Math.min(...mateDistances));
+  const rivalDistances=teammates.map(m=>Math.hypot(m.root.position.x-rival.root.position.x,m.root.position.z-rival.root.position.z));
+  const closestDefenderIndex=rivalDistances.indexOf(Math.min(...rivalDistances));
   teammates.forEach((mate,i)=>{
    const homeX=mate.homeX,homeZ=mate.homeZ;
    let tx=homeX,tz=homeZ,speed=5.4;
    const ballShift=clamp(ball.z*.18,-3.5,3.5);
    if(ball.owner==='player'){
-    tx=homeX+(homeX>-6?4.2:1.2);
+    // Attack with width: forwards run beyond the ball, midfielders offer support,
+    // while the back line stays behind it to prevent an easy counter.
+    tx=homeX+(homeX>0?8:(homeX>-12?4:0));
     tz=homeZ+ballShift;
    }else if(ball.owner==='rival'){
-    tx=homeX-2.4;
-    tz=homeZ+ballShift*.7;
+    // One defender closes the carrier; the rest compact the defensive block.
+    if(i===closestDefenderIndex){tx=rival.root.position.x;tz=rival.root.position.z;speed=7.2}
+    else{tx=homeX-2.4;tz=homeZ+ballShift*.7}
    }else{
     tx=homeX+clamp((ball.x-homeX)*.12,-4,4);
     tz=homeZ+ballShift;
@@ -363,7 +368,9 @@ function update(dt){
    let tx=enemy.awayX,tz=enemy.awayZ,speed=5.6;
    const ballShift=clamp(ball.z*.18,-3.5,3.5);
    if(ball.owner==='rival'){
-    tx=enemy.awayX+(enemy.awayX<6?-4: -1);
+    // Away side stretches the pitch in possession: attackers make forward runs,
+    // midfielders move into passing lanes and defenders hold a safety line.
+    tx=enemy.awayX+(enemy.awayX<0?-8:(enemy.awayX<24?-3:0));
     tz=enemy.awayZ+ballShift;
    }else{
     tx=enemy.awayX+clamp((ball.x-enemy.awayX)*.12,-4,4);
@@ -403,32 +410,32 @@ function update(dt){
   const drag=Math.pow(.987,dt*60);ball.vx*=drag;ball.vz*=drag;
   if(Math.hypot(ball.vx,ball.vz)<.08)ball.vx=ball.vz=0;
   ball.height=.31+Math.abs(Math.sin(state.elapsed*9))*Math.min(.2,Math.hypot(ball.vx,ball.vz)*.012);
-  if(Math.abs(ball.z)>17.8){ball.z=clamp(ball.z,-17.8,17.8);ball.vz*=-.68}
+  if(Math.abs(ball.z)>33.8){ball.z=clamp(ball.z,-33.8,33.8);ball.vz*=-.68}
   // Goal-line and post collisions are resolved below after ball integration.
-  if(Math.abs(ball.x)>29.8&&Math.abs(ball.z)>2.5){ball.x=clamp(ball.x,-29.8,29.8);ball.vx*=-.55}
-  if(Math.abs(ball.x)>29.8&&Math.abs(ball.z)<2.5&&ball.height>=2.35){ball.x=clamp(ball.x,-29.8,29.8);ball.vx*=-.55}
+  if(Math.abs(ball.x)>53.8&&Math.abs(ball.z)>3.7){ball.x=clamp(ball.x,-53.8,53.8);ball.vx*=-.55}
+  if(Math.abs(ball.x)>53.8&&Math.abs(ball.z)<3.7&&ball.height>=2.38){ball.x=clamp(ball.x,-53.8,53.8);ball.vx*=-.55}
   if(dist(player,ball)<.95&&Math.hypot(ball.vx,ball.vz)<5)ball.owner='player';
   if(dist(rival,ball)<.88){ball.owner='rival';ball.vx=ball.vz=0}
  }
 
  // Goal frame collision: posts and crossbar deflect shots that miss the opening.
- if(Math.abs(Math.abs(ball.x)-29)<.34){
-  for(const postZ of [-2.5,2.5]){
-   const d=Math.hypot(ball.x-Math.sign(ball.x)*29,ball.z-postZ);
+ if(Math.abs(Math.abs(ball.x)-52.5)<.34){
+  for(const postZ of [-3.66,3.66]){
+   const d=Math.hypot(ball.x-Math.sign(ball.x)*52.5,ball.z-postZ);
    if(d<.43&&ball.height<2.65){
     const nx=(ball.x-Math.sign(ball.x)*29)/(d||1),nz=(ball.z-postZ)/(d||1);
     const dot=ball.vx*nx+ball.vz*nz;
     if(dot<0){ball.vx-=1.55*dot*nx;ball.vz-=1.55*dot*nz;}
    }
   }
-  if(Math.abs(ball.z)<2.5&&Math.abs(ball.height-2.5)<.38){
+  if(Math.abs(ball.z)<3.66&&Math.abs(ball.height-2.44)<.38){
    ball.height=2.13;ball.vx*=-.55;ball.vz*=.82;
   }
  }
  if(checkGoal())return;
  // Back net: absorb the ball after it crosses into the goal.
- if(Math.abs(ball.x)>30.7&&Math.abs(ball.z)<2.45&&ball.height<2.4){
-  ball.x=Math.sign(ball.x)*30.7;ball.vx=0;ball.vz*=.45;
+ if(Math.abs(ball.x)>55&&Math.abs(ball.z)<3.66&&ball.height<2.4){
+  ball.x=Math.sign(ball.x)*55;ball.vx=0;ball.vz*=.45;
  }
  ballGroup.position.set(ball.x,ball.height,ball.z);
  ballMesh.rotation.x+=ball.vz*dt*1.4;ballMesh.rotation.z-=ball.vx*dt*1.4;
@@ -612,7 +619,7 @@ function kick(type){
  let dx,dz,power;
  if(type==='shoot'){
   // The controlled team attacks the goal on the positive X side.
-  dx=29.5-ball.x;dz=-ball.z*.28;power=19.5;
+  dx=53-ball.x;dz=-ball.z*.28;power=22;
  }else{
   // Pass to the closest available teammate instead of blindly following
   // the joystick direction. Scale power so the ball slows near the receiver.
