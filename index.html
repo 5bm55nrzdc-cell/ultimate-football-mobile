@@ -78,18 +78,14 @@
   </div>
   <div class="training-overlay hidden" id="trainingOverlay">
     <div class="training-card">
-      <p class="eyebrow">АКАДЕМИЯ ULTIMATE</p>
-      <div class="training-progress" id="trainingProgress">УРОК 1 ИЗ 6</div>
+      <div class="training-head"><span class="training-kicker">АКАДЕМИЯ · ПРАКТИКА</span><span id="trainingProgress">УПРАЖНЕНИЕ 1/6</span></div>
       <h2 id="trainingTitle">ДВИЖЕНИЕ</h2>
-      <p id="trainingText">Освой управление игроком.</p>
-      <div class="training-tip" id="trainingTip">Практикуйся на поле.</div>
-      <div class="training-actions">
-        <button class="secondary-menu-btn" id="trainingBackBtn">В МЕНЮ</button>
-        <button id="trainingNextBtn">ДАЛЕЕ</button>
-      </div>
+      <p id="trainingText">Перемести игрока с помощью джойстика.</p>
+      <div class="training-meter"><span id="trainingMeterFill"></span></div>
+      <div class="training-tip" id="trainingTip">Выполни задание, чтобы перейти дальше.</div>
+      <button class="training-exit" id="trainingBackBtn">ВЫЙТИ ИЗ ОБУЧЕНИЯ</button>
     </div>
-  </div>
-    <div class="rotate-note" id="rotateNote">↻ Поверни телефон горизонтально</div>
+  </div> <div class="rotate-note" id="rotateNote">↻ Поверни телефон горизонтально</div>
     <div class="mobile-controls">
       <div class="joystick" id="joystick"><div class="joy-ring"></div><div class="joy-knob" id="joyKnob"></div></div>
       <div class="action-buttons"><button id="sprintBtn" class="action sprint">РЫВОК</button><button id="passBtn" class="action pass">ПАС</button><button id="shootBtn" class="action shoot">УДАР</button><button id="tackleBtn" class="action tackle">ОТБОР</button></div>
