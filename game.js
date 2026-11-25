@@ -22,6 +22,7 @@ const trainingProgress=document.getElementById('trainingProgress');
 const trainingTitle=document.getElementById('trainingTitle');
 const trainingText=document.getElementById('trainingText');
 const trainingTip=document.getElementById('trainingTip');
+const trainingMeterFill=document.getElementById('trainingMeterFill');
 const trainingNextBtn=document.getElementById('trainingNextBtn');
 const trainingBackBtn=document.getElementById('trainingBackBtn');
 const menuMessage=document.getElementById('menuMessage');
@@ -234,6 +235,7 @@ const ballShadow=new THREE.Mesh(new THREE.CircleGeometry(.4,20),new THREE.MeshBa
 ballShadow.rotation.x=-Math.PI/2;ballShadow.position.y=.025;scene.add(ballShadow);
 const ball={x:-18.9,z:0,vx:0,vz:0,owner:null,height:.31,spin:0};
 const state={running:false,last:0,elapsed:0,home:0,away:0};
+let tutorialActive=false,tutorialStep=0,tutorialDistance=0;
 const input={x:0,z:0,sprint:false};
 let cameraMode='broadcast';
 let cameraYaw=0;
@@ -258,6 +260,7 @@ function tryTackle(){
   // A successful close challenge knocks the ball loose toward the player's feet.
   ball.owner='player';ball.vx=0;ball.vz=0;
   ball.x=px+(rx-px)/facing*.48;ball.z=pz+(rz-pz)/facing*.48;
+   if(tutorialActive&&tutorialStep===5)advanceTutorial();
  }else if(!ball.owner&&d<1.9){
   ball.owner='player';ball.vx=0;ball.vz=0;
  }else if(ball.owner==='player'){
@@ -319,6 +322,7 @@ function update(dt){
   moving=true;
  }
  updatePlayerVisual(player,dt,moving);
+ if(tutorialActive&&moving)updateTutorialDistance((input.sprint?8.7:6.1)*dt);
  const rivalTarget=ball.owner==='player'?player.root.position:(ball.owner==='rival'?{x:-41.5,z:clamp(ball.z*.35,-2.5,2.5)}:ball);
   const rx=rivalTarget.x-rival.root.position.x,rz=rivalTarget.z-rival.root.position.z,rd=Math.hypot(rx,rz)||1;
   if(rd>.65){
@@ -546,33 +550,40 @@ playBtn.addEventListener('click',start);
 document.getElementById('playBtnHero')?.addEventListener('click',start);
 settingsBtn.addEventListener('click',()=>{menuMessage.textContent='НАСТРОЙКИ: КНОПКА «КАМЕРА» В МАТЧЕ МЕНЯЕТ РАКУРС';});
 
-const lessons=[
- {title:'ДВИЖЕНИЕ',text:'Передвигай футболиста левым джойстиком. Толкай его в ту сторону, куда хочешь бежать.',tip:'На телефоне: удерживай джойстик и плавно меняй направление. Отпусти, чтобы остановиться.'},
- {title:'РЫВОК',text:'Используй кнопку «РЫВОК», чтобы ускориться и быстрее добраться до мяча.',tip:'Не держи ускорение постоянно: используй его на свободном пространстве.'},
- {title:'ВЕДЕНИЕ МЯЧА',text:'Подойди к мячу — игрок подберёт его. Двигайся с мячом, меняй направление и освобождайся от соперника.',tip:'Старайся не бежать прямо на защитника. Меняй направление заранее.'},
- {title:'ПАС',text:'Нажми «ПАС», чтобы отправить мяч партнёру по команде.',tip:'Перед пасом посмотри, где находится партнёр. Не отдавай мяч прямо сопернику.'},
- {title:'УДАР',text:'Когда окажешься рядом с мячом, нажми «УДАР». Целься в ворота соперника.',tip:'Подойди к мячу и выбери момент для удара.'},
- {title:'ОТБОР',text:'Когда соперник владеет мячом, приблизься к нему и нажми «ОТБОР».',tip:'Подходи к сопернику на небольшую дистанцию. Теперь ты готов к матчу!'}
+const tutorialLessons=[
+ {title:'ДВИЖЕНИЕ',text:'Проведи игрока вперёд или в сторону левым джойстиком.',tip:'Набери 4 метра движения.',goal:4},
+ {title:'УСКОРЕНИЕ',text:'Зажми кнопку «РЫВОК» и пробеги дистанцию.',tip:'Пробеги 5 метров с ускорением.',goal:5},
+ {title:'ВЕДЕНИЕ МЯЧА',text:'Мяч у ног. Управляй игроком и веди его в свободную зону.',tip:'Продвинься с мячом на 6 метров.',goal:6},
+ {title:'ПАС',text:'Нажми «ПАС», чтобы отправить мяч ближайшему партнёру.',tip:'Выполни настоящий пас кнопкой справа.',goal:1},
+ {title:'УДАР',text:'Направь атаку к воротам и нажми «УДАР».',tip:'Попробуй пробить по воротам соперника.',goal:1},
+ {title:'ОТБОР',text:'Соперник получил мяч. Подойди и нажми «ОТБОР».',tip:'Отбери мяч у соперника.',goal:1}
 ];
-let lessonIndex=0;
-function showLesson(){
- const lesson=lessons[lessonIndex];
- trainingProgress.textContent='УРОК '+(lessonIndex+1)+' ИЗ '+lessons.length;
- trainingTitle.textContent=lesson.title;
- trainingText.textContent=lesson.text;
- trainingTip.textContent=lesson.tip;
- trainingNextBtn.textContent=lessonIndex===lessons.length-1?'ЗАВЕРШИТЬ':'ДАЛЕЕ';
+function setupTutorialStep(){
+ const lesson=tutorialLessons[tutorialStep];tutorialDistance=0;
+ trainingProgress.textContent='УПРАЖНЕНИЕ '+(tutorialStep+1)+' / '+tutorialLessons.length;
+ trainingTitle.textContent=lesson.title;trainingText.textContent=lesson.text;trainingTip.textContent=lesson.tip;trainingMeterFill.style.width='0%';
+ if(tutorialStep===0){player.root.position.set(-20,0,0);ball.owner=null;ball.x=-18.9;ball.z=0;}
+ if(tutorialStep===1){player.root.position.set(-15,0,0);ball.owner=null;ball.x=-5;ball.z=0;}
+ if(tutorialStep===2||tutorialStep===3||tutorialStep===4){player.root.position.set(tutorialStep===2?-12:12,0,0);player.root.rotation.y=Math.PI/2;ball.owner='player';ball.x=player.root.position.x+.82;ball.z=0;ball.vx=ball.vz=0;}
+ if(tutorialStep===5){player.root.position.set(0,0,0);rival.root.position.set(1.45,0,0);rival.root.rotation.y=-Math.PI/2;ball.owner='rival';ball.x=2.27;ball.z=0;ball.vx=ball.vz=0;}
+}
+function advanceTutorial(){
+ tutorialStep++;
+ if(tutorialStep>=tutorialLessons.length){tutorialActive=false;trainingOverlay.classList.add('hidden');state.running=false;overlay.classList.remove('hidden');menuMessage.textContent='АКАДЕМИЯ ПРОЙДЕНА · ВСЕ 6 УПРАЖНЕНИЙ ВЫПОЛНЕНЫ';return;}
+ setupTutorialStep();
+}
+function updateTutorialDistance(amount){
+ if(!tutorialActive||amount<=0||tutorialStep>2)return;
+ tutorialDistance+=amount;trainingMeterFill.style.width=Math.min(100,tutorialDistance/tutorialLessons[tutorialStep].goal*100)+'%';
+ if(tutorialDistance>=tutorialLessons[tutorialStep].goal)advanceTutorial();
 }
 function openTraining(){
- lessonIndex=0;showLesson();trainingOverlay.classList.remove('hidden');
+ tutorialActive=true;tutorialStep=0;state.home=0;state.away=0;homeEl.textContent='0';awayEl.textContent='0';
+ overlay.classList.add('hidden');trainingOverlay.classList.remove('hidden');resetPositions();setupTutorialStep();
+ state.running=true;state.last=performance.now();requestAnimationFrame(frame);
 }
 trainingBtn.addEventListener('click',openTraining);
-trainingNextBtn.addEventListener('click',()=>{
- if(lessonIndex<lessons.length-1){lessonIndex++;showLesson();return;}
- trainingOverlay.classList.add('hidden');
- menuMessage.textContent='Обучение пройдено · Отличная работа!';
-});
-trainingBackBtn.addEventListener('click',()=>trainingOverlay.classList.add('hidden'));
+trainingBackBtn.addEventListener('click',()=>{tutorialActive=false;state.running=false;trainingOverlay.classList.add('hidden');overlay.classList.remove('hidden');resetPositions();});
 profileBtn.addEventListener('click',()=>{
  authOverlay.classList.remove('hidden');authMethods.classList.remove('hidden');authForm.classList.add('hidden');
  authTitle.textContent='ТВОЙ АККАУНТ';authDescription.textContent='Выбери удобный способ входа. Гостевой режим останется доступен.';
@@ -661,6 +672,7 @@ function kick(type){
  const len=Math.hypot(dx,dz)||1;
  ball.owner=null;
  ball.vx=dx/len*power;ball.vz=dz/len*power;ball.height=.38;
+ if(tutorialActive&&((tutorialStep===3&&type==='pass')||(tutorialStep===4&&type==='shoot')))advanceTutorial();
 }
 document.getElementById('passBtn').addEventListener('pointerdown',e=>{e.preventDefault();kick('pass')});
 document.getElementById('shootBtn').addEventListener('pointerdown',e=>{e.preventDefault();kick('shoot')});
