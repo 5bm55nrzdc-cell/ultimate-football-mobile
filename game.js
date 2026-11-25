@@ -450,21 +450,35 @@ function update(dt){
   const tx=carrier.root.position.x+Math.sin(a)*offset,tz=carrier.root.position.z+Math.cos(a)*offset;
   ball.x+=(tx-ball.x)*Math.min(1,dt*14);ball.z+=(tz-ball.z)*Math.min(1,dt*14);ball.vx=ball.vz=0;
  }else{
+  // Integrate the pass/shot and test the whole travelled segment against all
+  // outfield players. This prevents fast passes from tunnelling through bodies.
+  const oldX=ball.x,oldZ=ball.z;
   ball.x+=ball.vx*dt;ball.z+=ball.vz*dt;
+  const speedBefore=Math.hypot(ball.vx,ball.vz);
   const drag=Math.pow(.987,dt*60);ball.vx*=drag;ball.vz*=drag;
   if(Math.hypot(ball.vx,ball.vz)<.08)ball.vx=ball.vz=0;
-  ball.height=.31+Math.abs(Math.sin(state.elapsed*9))*Math.min(.2,Math.hypot(ball.vx,ball.vz)*.012);
+  ball.height=.31+Math.abs(Math.sin(state.elapsed*9))*Math.min(.2,speedBefore*.012);
   if(Math.abs(ball.z)>33.8){ball.z=clamp(ball.z,-33.8,33.8);ball.vz*=-.68}
   // Goal-line and post collisions are resolved below after ball integration.
   if(Math.abs(ball.x)>53.8&&Math.abs(ball.z)>3.7){ball.x=clamp(ball.x,-53.8,53.8);ball.vx*=-.55}
   if(Math.abs(ball.x)>53.8&&Math.abs(ball.z)<3.7&&ball.height>=2.38){ball.x=clamp(ball.x,-53.8,53.8);ball.vx*=-.55}
-  if(Math.hypot(ball.vx,ball.vz)<7){
-   let nearestActor=null,nearestSide=null,nearestDistance=1.05;
+  const sx=ball.x-oldX,sz=ball.z-oldZ,segmentSq=sx*sx+sz*sz;
+  let interceptor=null,interceptSide=null,bestImpact=Infinity;
+  if(ball.height<1.15&&speedBefore<25){
    for(const [side,actors] of [['home',homeActors],['away',awayActors]])for(const actor of actors){
-    const d=Math.hypot(actor.root.position.x-ball.x,actor.root.position.z-ball.z);
-    if(d<nearestDistance){nearestDistance=d;nearestActor=actor;nearestSide=side;}
+    const ax=actor.root.position.x-oldX,az=actor.root.position.z-oldZ;
+    const t=segmentSq>1e-6?clamp((ax*sx+az*sz)/segmentSq,0,1):0;
+    const px=oldX+sx*t,pz=oldZ+sz*t;
+    const impact=Math.hypot(actor.root.position.x-px,actor.root.position.z-pz);
+    const radius=speedBefore>15?.82:1.02;
+    if(impact<radius&&impact<bestImpact){bestImpact=impact;interceptor=actor;interceptSide=side;}
    }
-   if(nearestActor)setPossession(nearestActor,nearestSide);
+  }
+  if(interceptor){
+   setPossession(interceptor,interceptSide);
+   ball.x=interceptor.root.position.x+Math.sin(interceptor.root.rotation.y)*.68;
+   ball.z=interceptor.root.position.z+Math.cos(interceptor.root.rotation.y)*.68;
+   ball.height=.31;
   }
  }
  // Goalkeepers react to shots on target and parry them back into play.
