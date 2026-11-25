@@ -334,58 +334,67 @@ function update(dt){
    ball.owner='rival';ball.vx=ball.vz=0;aiStealCooldown=1.1;
   }else if(!ball.owner&&rd<.9){ball.owner='rival';ball.vx=ball.vz=0}
   updatePlayerVisual(rival,dt,rd>.65);
-  const mateDistances=teammates.map(m=>Math.hypot(m.root.position.x-ball.x,m.root.position.z-ball.z));
-  const looseMateIndex=mateDistances.indexOf(Math.min(...mateDistances));
-  const rivalDistances=teammates.map(m=>Math.hypot(m.root.position.x-rival.root.position.x,m.root.position.z-rival.root.position.z));
-  const closestDefenderIndex=rivalDistances.indexOf(Math.min(...rivalDistances));
+  // Autonomous team AI: react to possession, open space, pressure and nearby players.
+  const nearest=(arr,x,z)=>arr.reduce((best,p,i)=>{
+   const d=Math.hypot(p.root.position.x-x,p.root.position.z-z);
+   return d<best.d?{i,d,p}:best;
+  },{i:-1,d:Infinity,p:null});
+  const moveBot=(bot,tx,tz,speed,group)=>{
+   let sx=0,sz=0;
+   for(const other of group){
+    if(other===bot)continue;
+    const dx=bot.root.position.x-other.root.position.x,dz=bot.root.position.z-other.root.position.z,d=Math.hypot(dx,dz);
+    if(d>0.01&&d<2.8){const force=(2.8-d)/2.8;sx+=dx/d*force;sz+=dz/d*force}
+   }
+   tx=clamp(tx+sx*3.2,-48,48);tz=clamp(tz+sz*3.2,-30,30);
+   const dx=tx-bot.root.position.x,dz=tz-bot.root.position.z,d=Math.hypot(dx,dz)||1,step=Math.min(d,speed*dt);
+   bot.root.position.x+=dx/d*step;bot.root.position.z+=dz/d*step;
+   if(d>.22)bot.root.rotation.y=Math.atan2(dx,dz);
+   updatePlayerVisual(bot,dt,d>.55);
+  };
+  const homeHasBall=ball.owner==='player',awayHasBall=ball.owner==='rival',loose=ball.owner===null;
+  const homeChaser=nearest(teammates,ball.x,ball.z),awayChaser=nearest(opponents,ball.x,ball.z);
+  const homePress=nearest(teammates,rival.root.position.x,rival.root.position.z);
+  const awayPress=nearest(opponents,player.root.position.x,player.root.position.z);
+  const time=state.elapsed;
   teammates.forEach((mate,i)=>{
-   const homeX=mate.homeX,homeZ=mate.homeZ;
-   let tx=homeX,tz=homeZ,speed=5.4;
-   const ballShift=clamp(ball.z*.18,-3.5,3.5);
-   if(ball.owner==='player'){
-    // Attack with width: forwards run beyond the ball, midfielders offer support,
-    // while the back line stays behind it to prevent an easy counter.
-    tx=homeX+(homeX>0?8:(homeX>-12?4:0));
-    tz=homeZ+ballShift;
-   }else if(ball.owner==='rival'){
-    // One defender closes the carrier; the rest compact the defensive block.
-    if(i===closestDefenderIndex){tx=rival.root.position.x;tz=rival.root.position.z;speed=7.2}
-    else{tx=homeX-2.4;tz=homeZ+ballShift*.7}
-   }else{
-    tx=homeX+clamp((ball.x-homeX)*.12,-4,4);
-    tz=homeZ+ballShift;
-    if(i===looseMateIndex&&mateDistances[i]<13){tx=ball.x;tz=ball.z;speed=7.1}
+   const bx=ball.x,bz=ball.z,baseX=mate.homeX,baseZ=mate.homeZ;
+   const forward=baseX>0,mid=baseX>-25&&baseX<=0;
+   let tx=baseX,tz=baseZ,speed=5.8;
+   if(homeHasBall){
+    tx=baseX+(forward?13:mid?8:3)+clamp((bx+10)*.12,-3,7);
+    tz=baseZ*.58+bz*.42+Math.sin(time*1.15+i*1.7)*(forward?3.2:2);
+    if(forward&&Math.abs(mate.root.position.z-player.root.position.z)<4)tz+=mate.root.position.z>player.root.position.z?5:-5;
+    if(forward)speed=6.8;
+   }else if(awayHasBall){
+    if(i===homePress.i){tx=rival.root.position.x+1.1;tz=rival.root.position.z;speed=7.5}
+    else if(Math.hypot(mate.root.position.x-rival.root.position.x,mate.root.position.z-rival.root.position.z)<13){
+     tx=(baseX+rival.root.position.x)*.5;tz=(baseZ+rival.root.position.z)*.5;speed=6.4;
+    }else{tx=baseX-5+clamp((bx-baseX)*.16,-5,4);tz=baseZ*.65+bz*.35;speed=6.2}
+   }else if(i===homeChaser.i){tx=bx;tz=bz;speed=7.4}
+   else{
+    tx=baseX+clamp((bx-baseX)*.25,-8,8);
+    tz=baseZ*.55+bz*.45+Math.sin(time+i*1.9)*2.4;
+    if(homeChaser.d<10){tx+=forward?5:2;tz+=(i%2?4:-4)}
    }
-   tx=clamp(tx,-48,48);tz=clamp(tz,-30,30);
-   const mx=tx-mate.root.position.x,mz=tz-mate.root.position.z,md=Math.hypot(mx,mz)||1,step=Math.min(md,speed*dt);
-   mate.root.position.x+=mx/md*step;mate.root.position.z+=mz/md*step;
-   if(md>.25)mate.root.rotation.y=Math.atan2(mx,mz);
-   updatePlayerVisual(mate,dt,md>.65);
+   moveBot(mate,tx,tz,speed,teammates);
   });
-  const defenderDistances=opponents.map(e=>Math.hypot(ball.x-e.root.position.x,ball.z-e.root.position.z));
-  const pressingIndex=defenderDistances.indexOf(Math.min(...defenderDistances));
   opponents.forEach((enemy,i)=>{
-   let tx=enemy.awayX,tz=enemy.awayZ,speed=5.6;
-   const ballShift=clamp(ball.z*.18,-3.5,3.5);
-   if(ball.owner==='rival'){
-    // Away side stretches the pitch in possession: attackers make forward runs,
-    // midfielders move into passing lanes and defenders hold a safety line.
-    tx=enemy.awayX+(enemy.awayX<0?-8:(enemy.awayX<24?-3:0));
-    tz=enemy.awayZ+ballShift;
-   }else{
-    tx=enemy.awayX+clamp((ball.x-enemy.awayX)*.12,-4,4);
-    tz=enemy.awayZ+ballShift;
-    if(i===pressingIndex){tx=ball.x;tz=ball.z;speed=7}
-   }
-   tx=clamp(tx,-48,48);tz=clamp(tz,-30,30);
-   const ex=tx-enemy.root.position.x,ez=tz-enemy.root.position.z,ed=Math.hypot(ex,ez)||1,step=Math.min(ed,speed*dt);
-   enemy.root.position.x+=ex/ed*step;enemy.root.position.z+=ez/ed*step;
-   if(ed>.25)enemy.root.rotation.y=Math.atan2(ex,ez);
-   updatePlayerVisual(enemy,dt,ed>.65);
-   if(ball.owner==='player'&&Math.hypot(enemy.root.position.x-player.root.position.x,enemy.root.position.z-player.root.position.z)<.92&&aiStealCooldown<=0){
-    ball.owner='rival';ball.vx=ball.vz=0;aiStealCooldown=1;
-   }
-   if(!ball.owner&&Math.hypot(enemy.root.position.x-ball.x,enemy.root.position.z-ball.z)<.82){ball.owner='rival';ball.vx=ball.vz=0}
+   const bx=ball.x,bz=ball.z,baseX=enemy.awayX,baseZ=enemy.awayZ;
+   const forward=baseX<0,mid=baseX<25&&baseX>=0;
+   let tx=baseX,tz=baseZ,speed=5.9;
+   if(awayHasBall){
+    tx=baseX-(forward?13:mid?8:3)-clamp((10-bx)*.12,-3,7);
+    tz=baseZ*.58+bz*.42+Math.sin(time*1.1+i*1.6)*(forward?3.1:2.1);
+    if(forward)speed=6.8;
+   }else if(homeHasBall){
+    if(i===awayPress.i){tx=player.root.position.x-1.1;tz=player.root.position.z;speed=7.5}
+    else if(Math.hypot(enemy.root.position.x-player.root.position.x,enemy.root.position.z-player.root.position.z)<13){
+     tx=(baseX+player.root.position.x)*.5;tz=(baseZ+player.root.position.z)*.5;speed=6.4;
+    }else{tx=baseX+5+clamp((bx-baseX)*.16,-4,5);tz=baseZ*.65+bz*.35;speed=6.2}
+   }else if(i===awayChaser.i){tx=bx;tz=bz;speed=7.4}
+   else{tx=baseX+clamp((bx-baseX)*.25,-8,8);tz=baseZ*.55+bz*.45+Math.sin(time+i*1.8)*2.3}
+   moveBot(enemy,tx,tz,speed,opponents);
   });
   // Goalkeepers track the ball laterally while staying close to their goal line.
   const keeperHomeZ=clamp(ball.z*.9,-3.15,3.15);
