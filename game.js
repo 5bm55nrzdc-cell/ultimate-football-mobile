@@ -377,7 +377,7 @@ function update(dt){
     tz=enemy.awayZ+ballShift;
     if(i===pressingIndex){tx=ball.x;tz=ball.z;speed=7}
    }
-   tx=clamp(tx,-27,27);tz=clamp(tz,-16,16);
+   tx=clamp(tx,-48,48);tz=clamp(tz,-30,30);
    const ex=tx-enemy.root.position.x,ez=tz-enemy.root.position.z,ed=Math.hypot(ex,ez)||1,step=Math.min(ed,speed*dt);
    enemy.root.position.x+=ex/ed*step;enemy.root.position.z+=ez/ed*step;
    if(ed>.25)enemy.root.rotation.y=Math.atan2(ex,ez);
@@ -388,9 +388,11 @@ function update(dt){
    if(!ball.owner&&Math.hypot(enemy.root.position.x-ball.x,enemy.root.position.z-ball.z)<.82){ball.owner='rival';ball.vx=ball.vz=0}
   });
   // Goalkeepers track the ball laterally while staying close to their goal line.
-  const keeperHomeZ=clamp(ball.z*.72,-3.0,3.0);
-  const keeperAwayZ=clamp(ball.z*.72,-2.0,2.0);
-  for(const [keeper,gx,gz] of [[homeKeeper,-50,keeperHomeZ],[awayKeeper,50,keeperAwayZ]]){
+  const keeperHomeZ=clamp(ball.z*.9,-3.15,3.15);
+  const keeperAwayZ=clamp(ball.z*.9,-3.15,3.15);
+  const homeStep=clamp((ball.x+50)/14,0,1)*4.5;
+  const awayStep=clamp((50-ball.x)/14,0,1)*4.5;
+  for(const [keeper,gx,gz] of [[homeKeeper,-50+homeStep,keeperHomeZ],[awayKeeper,50-awayStep,keeperAwayZ]]){
    const kx=gx-keeper.root.position.x,kz=gz-keeper.root.position.z;
    const kd=Math.hypot(kx,kz)||1,ks=Math.min(kd,4.8*dt);
    keeper.root.position.x+=kx/kd*ks;keeper.root.position.z+=kz/kd*ks;
@@ -416,6 +418,16 @@ function update(dt){
   if(Math.abs(ball.x)>53.8&&Math.abs(ball.z)<3.7&&ball.height>=2.38){ball.x=clamp(ball.x,-53.8,53.8);ball.vx*=-.55}
   if(dist(player,ball)<.95&&Math.hypot(ball.vx,ball.vz)<5)ball.owner='player';
   if(dist(rival,ball)<.88){ball.owner='rival';ball.vx=ball.vz=0}
+ }
+ // Goalkeepers react to shots on target and parry them back into play.
+ if(ball.owner===null&&ball.height<2.35){
+  const homeSaveDist=Math.hypot(ball.x-homeKeeper.root.position.x,ball.z-homeKeeper.root.position.z);
+  const awaySaveDist=Math.hypot(ball.x-awayKeeper.root.position.x,ball.z-awayKeeper.root.position.z);
+  if(ball.x<-44&&ball.vx<0&&homeSaveDist<2.35){
+   ball.x=homeKeeper.root.position.x+1.0;ball.vx=Math.max(4.5,Math.abs(ball.vx)*.58);ball.vz*=.42;ball.height=.42;
+  }else if(ball.x>44&&ball.vx>0&&awaySaveDist<2.35){
+   ball.x=awayKeeper.root.position.x-1.0;ball.vx=-Math.max(4.5,Math.abs(ball.vx)*.58);ball.vz*=.42;ball.height=.42;
+  }
  }
 
  // Goal frame collision: posts and crossbar deflect shots that miss the opening.
