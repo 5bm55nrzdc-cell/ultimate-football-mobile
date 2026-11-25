@@ -233,7 +233,7 @@ const patches=mat(0x18201c,.5);
 for(let i=0;i<5;i++){const p=new THREE.Mesh(new THREE.CircleGeometry(.105,5),patches);p.position.set(Math.cos(i*2*Math.PI/5)*.305,Math.sin(i*2*Math.PI/5)*.305,0);p.rotation.z=i*.2;ballMesh.add(p)}
 const ballShadow=new THREE.Mesh(new THREE.CircleGeometry(.4,20),new THREE.MeshBasicMaterial({color:0x07140c,transparent:true,opacity:.3}));
 ballShadow.rotation.x=-Math.PI/2;ballShadow.position.y=.025;scene.add(ballShadow);
-const ball={x:-18.9,z:0,vx:0,vz:0,owner:null,height:.31,spin:0};
+const ball={x:-18.9,z:0,vx:0,vz:0,owner:null,height:.31,spin:0,lastTouch:null,lastTouchLock:0};
 const homeActors=[player,...teammates],awayActors=[rival,...opponents];
 let aiDecisionCooldown=0;
 function ownerKey(actor,side){
@@ -249,7 +249,7 @@ function getBallCarrier(){
 }
 function isHomeOwner(o){return o==='player'||(typeof o==='string'&&o.startsWith('mate:'))}
 function isAwayOwner(o){return o==='rival'||(typeof o==='string'&&o.startsWith('enemy:'))}
-function setPossession(actor,side){ball.owner=ownerKey(actor,side);ball.vx=0;ball.vz=0;}
+function setPossession(actor,side){ball.owner=ownerKey(actor,side);ball.vx=0;ball.vz=0;ball.lastTouch=actor;ball.lastTouchLock=.2;}
 
 const state={running:false,last:0,elapsed:0,home:0,away:0};
 let tutorialActive=false,tutorialStep=0,tutorialDistance=0;
@@ -299,6 +299,7 @@ function updatePlayerVisual(p,dt,moving){
 }
 function update(dt){
  tackleCooldown=Math.max(0,tackleCooldown-dt);
+ ball.lastTouchLock=Math.max(0,ball.lastTouchLock-dt);
  const magnitude=Math.hypot(input.x,input.z);
  let moving=false;
  if(magnitude>.08){
@@ -419,10 +420,10 @@ function update(dt){
       .filter(o=>o.forward>3).sort((x,y)=>(y.forward+y.space*.45)-(x.forward+x.space*.45));
      if(distanceToGoal<17&&pressure>2.3){
       const dx=goalX-root.position.x,dz=attackZ-root.position.z,len=Math.hypot(dx,dz)||1;
-      ball.owner=null;ball.vx=dx/len*20;ball.vz=dz/len*20;ball.height=.52;
+      ball.owner=null;ball.lastTouch=activeCarrier;ball.lastTouchLock=.28;ball.vx=dx/len*20;ball.vz=dz/len*20;ball.height=.52;
      }else if(options[0]&&pressure<3.2){
       const receiver=options[0].p,dx=receiver.root.position.x-root.position.x,dz=receiver.root.position.z-root.position.z,len=Math.hypot(dx,dz)||1,power=clamp(len*.82,7,13);
-      ball.owner=null;ball.vx=dx/len*power;ball.vz=dz/len*power;ball.height=.38;
+      ball.owner=null;ball.lastTouch=activeCarrier;ball.lastTouchLock=.28;ball.vx=dx/len*power;ball.vz=dz/len*power;ball.height=.38;
      }
      aiDecisionCooldown=.85+Math.random()*.55;
     }
@@ -483,7 +484,7 @@ function update(dt){
     const px=oldX+sx*t,pz=oldZ+sz*t;
     const impact=Math.hypot(actor.root.position.x-px,actor.root.position.z-pz);
     const radius=speedBefore>15?.82:1.02;
-    if(impact<radius&&impact<bestImpact){bestImpact=impact;interceptor=actor;interceptSide=side;}
+    if(!(actor===ball.lastTouch&&ball.lastTouchLock>0)&&impact<radius&&impact<bestImpact){bestImpact=impact;interceptor=actor;interceptSide=side;}
    }
   }
   if(interceptor){
@@ -568,7 +569,7 @@ function resetPositions(){
  teammates.forEach(m=>m.root.position.set(m.homeX,0,m.homeZ));
  opponents.forEach(e=>e.root.position.set(e.awayX,0,e.awayZ));
  homeKeeper.root.position.set(-50,0,0);awayKeeper.root.position.set(50,0,0);
- ball.x=-18.9;ball.z=0;ball.vx=ball.vz=0;ball.owner=null;ball.height=.31;
+ ball.x=-18.9;ball.z=0;ball.vx=ball.vz=0;ball.owner=null;ball.height=.31;ball.lastTouch=null;ball.lastTouchLock=0;
 }
 function render(){renderer.render(scene,camera)}
 function resize(){
@@ -739,7 +740,7 @@ function kick(type){
   }
  }
  const len=Math.hypot(dx,dz)||1;
- ball.owner=null;
+ ball.owner=null;ball.lastTouch=player;ball.lastTouchLock=.28;
  ball.vx=dx/len*power;ball.vz=dz/len*power;ball.height=.38;
  if(tutorialActive&&((tutorialStep===3&&type==='pass')||(tutorialStep===4&&type==='shoot')))advanceTutorial();
 }
