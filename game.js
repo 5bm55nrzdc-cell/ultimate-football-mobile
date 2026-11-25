@@ -228,7 +228,7 @@ const input={x:0,z:0,sprint:false};
 let cameraMode='broadcast';
 let cameraYaw=0;
 const cameraBtn=document.getElementById('cameraBtn');
-let tackleCooldown=0;
+let tackleCooldown=0,aiStealCooldown=0,aiShotCooldown=0;
 const goalFlash={until:0};
 function scoreGoal(side){
  if(goalFlash.until>state.elapsed)return;
@@ -309,67 +309,55 @@ function update(dt){
   moving=true;
  }
  updatePlayerVisual(player,dt,moving);
- const target=ball.owner==='player'?player.root.position:(ball.owner==='rival'?{x:-15.8,z:0}:ball);
- const rx=target.x-rival.root.position.x,rz=target.z-rival.root.position.z;
- const rd=Math.hypot(rx,rz)||1;
- const rivalSpeed=ball.owner==='rival'?5.5:6.2;
- rival.root.position.x=clamp(rival.root.position.x+rx/rd*rivalSpeed*dt,-28,28);
- rival.root.position.z=clamp(rival.root.position.z+rz/rd*rivalSpeed*dt,-17,17);
- rival.root.rotation.y=Math.atan2(rx,rz);
- updatePlayerVisual(rival,dt,rd>.8);
- // Teammates roam across the pitch and make decisions from the live play,
- // instead of returning to fixed "left/right lane" coordinates.
- teammates.forEach((mate,i)=>{
-  const side=i===0?-1:1;
-  const carrier=ball.owner==='player'?player.root:ball;
-  const phase=state.elapsed*.72+i*2.4;
-  const spaceX=Math.sin(phase)*5.2;
-  const spaceZ=Math.cos(phase*1.17)*5.8;
-  let tx,tz;
-  if(ball.owner==='player'){
-   // Offer moving support at different depths and angles around the carrier.
-   tx=player.root.position.x+2.5+spaceX;
-   tz=player.root.position.z+side*3.2+spaceZ*.62;
-  }else{
-   // When possession is loose or with the opponent, move toward the action
-   // while spreading naturally instead of holding a preset formation.
-   tx=carrier.x+side*2.8+spaceX*.55;
-   tz=carrier.z+side*2.4+spaceZ;
+ const rivalTarget=ball.owner==='player'?player.root.position:(ball.owner==='rival'?{x:-23,z:clamp(ball.z*.35,-1.25,1.25)}:ball);
+  const rx=rivalTarget.x-rival.root.position.x,rz=rivalTarget.z-rival.root.position.z,rd=Math.hypot(rx,rz)||1;
+  if(rd>.65){
+   const speed=ball.owner==='rival'?5.25:6.5;
+   rival.root.position.x=clamp(rival.root.position.x+rx/rd*speed*dt,-28,28);
+   rival.root.position.z=clamp(rival.root.position.z+rz/rd*speed*dt,-17,17);
+   rival.root.rotation.y=Math.atan2(rx,rz);
   }
-  tx=clamp(tx,-27,27);tz=clamp(tz,-16,16);
-  const mx=tx-mate.root.position.x,mz=tz-mate.root.position.z,md=Math.hypot(mx,mz)||1;
-  const speed=ball.owner==='player'?5.8:6.3;
-  const step=Math.min(md,speed*dt);
-  mate.root.position.x+=mx/md*step;mate.root.position.z+=mz/md*step;
-  if(md>.25)mate.root.rotation.y=Math.atan2(mx,mz);
-  updatePlayerVisual(mate,dt,md>.7);
- });
- // Defenders have independent decisions: the closest one pressures the ball,
- // while the other tracks the developing attack and can move anywhere on the field.
- const defenderDistances=opponents.map(enemy=>Math.hypot(ball.x-enemy.root.position.x,ball.z-enemy.root.position.z));
- const pressingIndex=defenderDistances[0]<=defenderDistances[1]?0:1;
- opponents.forEach((enemy,i)=>{
-  let tx,tz;
-  if(i===pressingIndex){
-   // Closest defender actively hunts the ball, regardless of field position.
-   tx=ball.x+(ball.owner==='rival'?-1.1:0);
-   tz=ball.z;
-  }else{
-   // Second defender covers the player/ball passing route and keeps moving,
-   // with a small roaming offset so it does not stand on a rigid defensive line.
-   const coverTarget=ball.owner==='player'?player.root.position:ball;
-   const phase=state.elapsed*.58+i*2.8;
-   tx=coverTarget.x-1.8+Math.sin(phase)*3.8;
-   tz=coverTarget.z+Math.cos(phase*1.13)*4.8;
-  }
-  tx=clamp(tx,-27,27);tz=clamp(tz,-16,16);
-  const ex=tx-enemy.root.position.x,ez=tz-enemy.root.position.z,ed=Math.hypot(ex,ez)||1;
-  const speed=i===pressingIndex?6.4:5.7;
-  const step=Math.min(ed,speed*dt);
-  enemy.root.position.x+=ex/ed*step;enemy.root.position.z+=ez/ed*step;
-  if(ed>.25)enemy.root.rotation.y=Math.atan2(ex,ez);
-  updatePlayerVisual(enemy,dt,ed>.7);
- });
+  if(ball.owner==='rival'&&rival.root.position.x<-18&&aiShotCooldown<=0){
+   const aimZ=clamp(-ball.z*.72,-1.35,1.35),sx=-29.5-ball.x,sz=aimZ-ball.z,len=Math.hypot(sx,sz)||1;
+   ball.owner=null;ball.vx=sx/len*19;ball.vz=sz/len*19;ball.height=.48;aiShotCooldown=1.65;
+  }else if(ball.owner==='player'&&rd<1.05&&aiStealCooldown<=0){
+   ball.owner='rival';ball.vx=ball.vz=0;aiStealCooldown=1.1;
+  }else if(!ball.owner&&rd<.9){ball.owner='rival';ball.vx=ball.vz=0}
+  updatePlayerVisual(rival,dt,rd>.65);
+  const mateDistances=teammates.map(m=>Math.hypot(m.root.position.x-ball.x,m.root.position.z-ball.z));
+  const looseMateIndex=mateDistances[0]<=mateDistances[1]?0:1;
+  teammates.forEach((mate,i)=>{
+   const side=i===0?-1:1;let tx,tz,speed=6.1;
+   if(ball.owner==='player'){tx=player.root.position.x+(i===0?2.2:7);tz=clamp(player.root.position.z+side*(i===0?2.8:5),-15,15)}
+   else if(ball.owner==='rival'){tx=clamp(ball.x+3.5,-25,25);tz=clamp(ball.z+side*4.2,-15,15);speed=6.5}
+   else if(i===looseMateIndex){tx=ball.x;tz=ball.z;speed=7}
+   else{tx=clamp(ball.x+side*5,-25,25);tz=clamp(ball.z-side*4,-15,15)}
+   tx=clamp(tx,-27,27);tz=clamp(tz,-16,16);
+   const mx=tx-mate.root.position.x,mz=tz-mate.root.position.z,md=Math.hypot(mx,mz)||1,step=Math.min(md,speed*dt);
+   mate.root.position.x+=mx/md*step;mate.root.position.z+=mz/md*step;
+   if(md>.25)mate.root.rotation.y=Math.atan2(mx,mz);
+   updatePlayerVisual(mate,dt,md>.65);
+  });
+  const defenderDistances=opponents.map(e=>Math.hypot(ball.x-e.root.position.x,ball.z-e.root.position.z));
+  const pressingIndex=defenderDistances[0]<=defenderDistances[1]?0:1;
+  opponents.forEach((enemy,i)=>{
+   let tx,tz;
+   if(ball.owner==='rival'){tx=clamp(rival.root.position.x+4.5,-25,25);tz=clamp(rival.root.position.z+(i===0?-4.5:4.5),-15,15)}
+   else{
+    const target=ball.owner==='player'?player.root.position:ball;
+    if(i===pressingIndex){tx=target.x;tz=target.z}
+    else{tx=target.x-2.8;tz=target.z+(i===0?-4.5:4.5)}
+   }
+   tx=clamp(tx,-27,27);tz=clamp(tz,-16,16);
+   const ex=tx-enemy.root.position.x,ez=tz-enemy.root.position.z,ed=Math.hypot(ex,ez)||1,step=Math.min(ed,(i===pressingIndex?6.8:6)*dt);
+   enemy.root.position.x+=ex/ed*step;enemy.root.position.z+=ez/ed*step;
+   if(ed>.25)enemy.root.rotation.y=Math.atan2(ex,ez);
+   updatePlayerVisual(enemy,dt,ed>.65);
+   if(ball.owner==='player'&&Math.hypot(enemy.root.position.x-player.root.position.x,enemy.root.position.z-player.root.position.z)<.92&&aiStealCooldown<=0){
+    ball.owner='rival';ball.vx=ball.vz=0;aiStealCooldown=1;
+   }
+   if(!ball.owner&&Math.hypot(enemy.root.position.x-ball.x,enemy.root.position.z-ball.z)<.82){ball.owner='rival';ball.vx=ball.vz=0}
+  });
  if(ball.owner==='player'){
   const a=player.root.rotation.y;
   const tx=player.root.position.x+Math.sin(a)*.82,tz=player.root.position.z+Math.cos(a)*.82;
