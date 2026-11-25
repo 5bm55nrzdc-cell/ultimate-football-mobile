@@ -430,7 +430,23 @@ function update(dt){
      aiDecisionCooldown=.85+Math.random()*.55;
     }
     if(ball.owner){
-     const dx=goalX-root.position.x,dz=attackZ-root.position.z,len=Math.hypot(dx,dz)||1,stride=Math.min(len,3.15*dt);
+     let targetZ=attackZ;
+     const nearestThreat=defending.reduce((best,p)=>{
+      const d=Math.hypot(p.root.position.x-root.position.x,p.root.position.z-root.position.z);
+      return d<best.d?{p,d}:best;
+     },{p:null,d:Infinity});
+     // When a defender closes the lane, carry into the side with more space.
+     // Keep the run inside the attacking corridor so the carrier does not
+     // drift toward the touchline while trying to avoid pressure.
+     if(nearestThreat.p&&nearestThreat.d<4.8&&distanceToGoal>7){
+      const candidates=[-1,1].map(side=>{
+       const z=clamp(root.position.z+side*4.2,-9,9);
+       const clearance=defending.reduce((best,p)=>Math.min(best,Math.hypot(p.root.position.x-(root.position.x+direction*3),p.root.position.z-z)),Infinity);
+       return {z,score:clearance-Math.abs(z)*.12};
+      }).sort((a,b)=>b.score-a.score);
+      if(candidates[0])targetZ=candidates[0].z;
+     }
+     const dx=goalX-root.position.x,dz=targetZ-root.position.z,len=Math.hypot(dx,dz)||1,stride=Math.min(len,3.15*dt);
      root.rotation.y=Math.atan2(dx,dz);root.position.x+=dx/len*stride;root.position.z+=dz/len*stride;
      updatePlayerVisual(activeCarrier,dt,stride>.02);
     }
