@@ -363,8 +363,10 @@ function update(dt){
   };
   const homeHasBall=isHomeOwner(ball.owner),awayHasBall=isAwayOwner(ball.owner),loose=ball.owner===null;
   const homeChaser=nearest(teammates,ball.x,ball.z),awayChaser=nearest(opponents,ball.x,ball.z);
-  const homePress=nearest(teammates,rival.root.position.x,rival.root.position.z);
-  const awayPress=nearest(opponents,player.root.position.x,player.root.position.z);
+  const currentCarrier=getBallCarrier();
+  const pressTarget=currentCarrier?currentCarrier.root.position:{x:ball.x,z:ball.z};
+  const homePress=nearest(teammates,pressTarget.x,pressTarget.z);
+  const awayPress=nearest(opponents,pressTarget.x,pressTarget.z);
   const time=state.elapsed;
   teammates.forEach((mate,i)=>{
    const bx=ball.x,bz=ball.z,baseX=mate.homeX,baseZ=mate.homeZ;
@@ -376,9 +378,9 @@ function update(dt){
     if(forward&&Math.abs(mate.root.position.z-player.root.position.z)<4)tz+=mate.root.position.z>player.root.position.z?5:-5;
     if(forward)speed=6.8;
    }else if(awayHasBall){
-    if(i===homePress.i){tx=rival.root.position.x+1.1;tz=rival.root.position.z;speed=7.5}
-    else if(Math.hypot(mate.root.position.x-rival.root.position.x,mate.root.position.z-rival.root.position.z)<13){
-     tx=(baseX+rival.root.position.x)*.5;tz=(baseZ+rival.root.position.z)*.5;speed=6.4;
+    if(i===homePress.i){tx=pressTarget.x+1.1;tz=pressTarget.z;speed=7.5}
+    else if(Math.hypot(mate.root.position.x-pressTarget.x,mate.root.position.z-pressTarget.z)<13){
+     tx=(baseX+pressTarget.x)*.5;tz=(baseZ+pressTarget.z)*.5;speed=6.4;
     }else{tx=baseX-5+clamp((bx-baseX)*.16,-5,4);tz=baseZ*.65+bz*.35;speed=6.2}
    }else if(i===homeChaser.i){tx=bx;tz=bz;speed=7.4}
    else{
@@ -397,9 +399,9 @@ function update(dt){
     tz=baseZ*.58+bz*.42+Math.sin(time*1.1+i*1.6)*(forward?3.1:2.1);
     if(forward)speed=6.8;
    }else if(homeHasBall){
-    if(i===awayPress.i){tx=player.root.position.x-1.1;tz=player.root.position.z;speed=7.5}
-    else if(Math.hypot(enemy.root.position.x-player.root.position.x,enemy.root.position.z-player.root.position.z)<13){
-     tx=(baseX+player.root.position.x)*.5;tz=(baseZ+player.root.position.z)*.5;speed=6.4;
+    if(i===awayPress.i){tx=pressTarget.x-1.1;tz=pressTarget.z;speed=7.5}
+    else if(Math.hypot(enemy.root.position.x-pressTarget.x,enemy.root.position.z-pressTarget.z)<13){
+     tx=(baseX+pressTarget.x)*.5;tz=(baseZ+pressTarget.z)*.5;speed=6.4;
     }else{tx=baseX+5+clamp((bx-baseX)*.16,-4,5);tz=baseZ*.65+bz*.35;speed=6.2}
    }else if(i===awayChaser.i){tx=bx;tz=bz;speed=7.4}
    else{tx=baseX+clamp((bx-baseX)*.25,-8,8);tz=baseZ*.55+bz*.45+Math.sin(time+i*1.8)*2.3}
