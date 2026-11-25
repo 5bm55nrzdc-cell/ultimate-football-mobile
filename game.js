@@ -433,13 +433,25 @@ function update(dt){
     }
    }
      // Goalkeepers track the ball laterally while staying close to their goal line.
-  const keeperHomeZ=clamp(ball.z*.9,-3.15,3.15);
-  const keeperAwayZ=clamp(ball.z*.9,-3.15,3.15);
+  // Goalkeepers read the shot vector and shift toward its projected crossing
+  // point instead of simply mirroring the ball's current lateral position.
+  const projectAtGoal=(goalX)=>{
+   if(Math.abs(ball.vx)<1.2)return ball.z;
+   const t=clamp((goalX-ball.x)/ball.vx,0,1.8);
+   return ball.z+ball.vz*t;
+  };
+  const keeperHomeZ=clamp(projectAtGoal(-49.2)*.82,-3.25,3.25);
+  const keeperAwayZ=clamp(projectAtGoal(49.2)*.82,-3.25,3.25);
   const homeStep=clamp((ball.x+50)/14,0,1)*4.5;
   const awayStep=clamp((50-ball.x)/14,0,1)*4.5;
-  for(const [keeper,gx,gz] of [[homeKeeper,-50+homeStep,keeperHomeZ],[awayKeeper,50-awayStep,keeperAwayZ]]){
+  for(const [keeper,gx,gz,defendingShot] of [
+   [homeKeeper,-50+homeStep,keeperHomeZ,ball.vx< -3],
+   [awayKeeper,50-awayStep,keeperAwayZ,ball.vx>3]
+  ]){
    const kx=gx-keeper.root.position.x,kz=gz-keeper.root.position.z;
-   const kd=Math.hypot(kx,kz)||1,ks=Math.min(kd,4.8*dt);
+   const kd=Math.hypot(kx,kz)||1;
+   const keeperSpeed=defendingShot?7.2:4.8;
+   const ks=Math.min(kd,keeperSpeed*dt);
    keeper.root.position.x+=kx/kd*ks;keeper.root.position.z+=kz/kd*ks;
    if(kd>.2)keeper.root.rotation.y=Math.atan2(kx,kz);
    updatePlayerVisual(keeper,dt,kd>.35);
