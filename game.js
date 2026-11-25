@@ -322,8 +322,8 @@ function update(dt){
   moving=true;
  }
  updatePlayerVisual(player,dt,moving);
- if(tutorialActive&&moving)updateTutorialDistance((input.sprint?8.7:6.1)*dt);
- const rivalTarget=ball.owner==='player'?player.root.position:(ball.owner==='rival'?{x:-41.5,z:clamp(ball.z*.35,-2.5,2.5)}:ball);
+ if(tutorialActive&&moving&&(tutorialStep!==1||input.sprint))updateTutorialDistance((input.sprint?8.7:6.1)*dt);
+ const rivalTarget=tutorialActive&&tutorialStep===5?player.root.position:(ball.owner==='player'?player.root.position:(ball.owner==='rival'?{x:-41.5,z:clamp(ball.z*.35,-2.5,2.5)}:ball));
   const rx=rivalTarget.x-rival.root.position.x,rz=rivalTarget.z-rival.root.position.z,rd=Math.hypot(rx,rz)||1;
   if(rd>.65){
    const speed=ball.owner==='rival'?5.25:6.5;
