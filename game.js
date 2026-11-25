@@ -692,14 +692,22 @@ function kick(type){
  }else{
   // Pass to the closest available teammate instead of blindly following
   // the joystick direction. Scale power so the ball slows near the receiver.
-  const receiver=teammates.reduce((best,mate)=>{
-   const d=Math.hypot(mate.root.position.x-player.root.position.x,mate.root.position.z-player.root.position.z);
-   return !best||d<best.distance?{mate,distance:d}:best;
-  },null);
+  const receiver=teammates.map(mate=>{
+   const mx=mate.root.position.x-player.root.position.x,mz=mate.root.position.z-player.root.position.z;
+   const distance=Math.hypot(mx,mz);
+   const space=opponents.reduce((best,enemy)=>Math.min(best,Math.hypot(enemy.root.position.x-mate.root.position.x,enemy.root.position.z-mate.root.position.z)),Infinity);
+   const forward=mx;
+   const lane=opponents.reduce((best,enemy)=>{
+    const ex=enemy.root.position.x-player.root.position.x,ez=enemy.root.position.z-player.root.position.z;
+    const t=clamp((ex*mx+ez*mz)/(distance*distance||1),0,1);
+    return Math.min(best,Math.hypot(player.root.position.x+mx*t-enemy.root.position.x,player.root.position.z+mz*t-enemy.root.position.z));
+   },Infinity);
+   return {mate,distance,score:forward*.55+space*.8+lane*.35-Math.abs(mz)*.08};
+  }).filter(o=>o.distance>3).sort((a,b)=>b.score-a.score)[0];
   if(receiver){
    dx=receiver.mate.root.position.x-ball.x;
    dz=receiver.mate.root.position.z-ball.z;
-   power=clamp(receiver.distance*.78,5,11);
+   power=clamp(receiver.distance*.78,5,13);
   }else{
    dx=player.dx;dz=player.dz;power=10.5;
   }
