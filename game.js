@@ -203,18 +203,28 @@ for(const side of [-1,1]){
 }
 const player=makePlayer(0x2d8cff,0xffffff,10);
 const rival=makePlayer(0xe94e48,0xffd44c,9);
-const teammates=[
- makePlayer(0x2d8cff,0xffffff,7),
- makePlayer(0x2d8cff,0xffffff,11)
+// 4-3-3 formations: controlled player + 9 outfield teammates + goalkeeper.
+const homeSlots=[
+ [-23,-15,2],[-23,-5,3],[-23,5,4],[-23,15,5],
+ [-11,-10,6],[-11,10,8],[-4,0,7],[2,-8,9],[2,8,11]
 ];
-const opponents=[
- makePlayer(0xe94e48,0xffd44c,4),
- makePlayer(0xe94e48,0xffd44c,6)
+const awaySlots=[
+ [23,-15,2],[23,-5,3],[23,5,4],[23,15,5],
+ [11,-10,6],[11,10,8],[4,0,7],[-2,-8,10],[-2,8,11]
 ];
-player.root.position.set(-12,0,0);rival.root.position.set(12,0,0);rival.root.rotation.y=-Math.PI/2;
-teammates[0].root.position.set(-17,0,-8);teammates[1].root.position.set(-17,0,8);
-opponents[0].root.position.set(14,0,-9);opponents[1].root.position.set(14,0,9);
-for(const p of [...teammates,...opponents])p.root.rotation.y=-Math.PI/2;
+const teammates=homeSlots.map(([x,z,n])=>{
+ const p=makePlayer(0x2d8cff,0xffffff,n);
+ p.homeX=x;p.homeZ=z;p.root.position.set(x,0,z);return p;
+});
+const opponents=awaySlots.map(([x,z,n])=>{
+ const p=makePlayer(0xe94e48,0xffd44c,n);
+ p.awayX=x;p.awayZ=z;p.root.position.set(x,0,z);return p;
+});
+const homeKeeper=makePlayer(0x22a878,0xffffff,1);
+const awayKeeper=makePlayer(0xf0b33d,0x202020,1);
+player.root.position.set(-12,0,0);rival.root.position.set(12,0,0);
+homeKeeper.root.position.set(-27.2,0,0);awayKeeper.root.position.set(27.2,0,0);
+for(const p of [rival,...teammates,...opponents,homeKeeper,awayKeeper])p.root.rotation.y=-Math.PI/2;
 const ballGroup=new THREE.Group();scene.add(ballGroup);
 const ballMesh=new THREE.Mesh(new THREE.SphereGeometry(.31,24,18),mat(0xffffff,.34));
 ballMesh.castShadow=true;ballGroup.add(ballMesh);
@@ -325,13 +335,22 @@ function update(dt){
   }else if(!ball.owner&&rd<.9){ball.owner='rival';ball.vx=ball.vz=0}
   updatePlayerVisual(rival,dt,rd>.65);
   const mateDistances=teammates.map(m=>Math.hypot(m.root.position.x-ball.x,m.root.position.z-ball.z));
-  const looseMateIndex=mateDistances[0]<=mateDistances[1]?0:1;
+  const looseMateIndex=mateDistances.indexOf(Math.min(...mateDistances));
   teammates.forEach((mate,i)=>{
-   const side=i===0?-1:1;let tx,tz,speed=6.1;
-   if(ball.owner==='player'){tx=player.root.position.x+(i===0?2.2:7);tz=clamp(player.root.position.z+side*(i===0?2.8:5),-15,15)}
-   else if(ball.owner==='rival'){tx=clamp(ball.x+3.5,-25,25);tz=clamp(ball.z+side*4.2,-15,15);speed=6.5}
-   else if(i===looseMateIndex){tx=ball.x;tz=ball.z;speed=7}
-   else{tx=clamp(ball.x+side*5,-25,25);tz=clamp(ball.z-side*4,-15,15)}
+   const homeX=mate.homeX,homeZ=mate.homeZ;
+   let tx=homeX,tz=homeZ,speed=5.4;
+   const ballShift=clamp(ball.z*.18,-3.5,3.5);
+   if(ball.owner==='player'){
+    tx=homeX+(homeX>-6?4.2:1.2);
+    tz=homeZ+ballShift;
+   }else if(ball.owner==='rival'){
+    tx=homeX-2.4;
+    tz=homeZ+ballShift*.7;
+   }else{
+    tx=homeX+clamp((ball.x-homeX)*.12,-4,4);
+    tz=homeZ+ballShift;
+    if(i===looseMateIndex&&mateDistances[i]<13){tx=ball.x;tz=ball.z;speed=7.1}
+   }
    tx=clamp(tx,-27,27);tz=clamp(tz,-16,16);
    const mx=tx-mate.root.position.x,mz=tz-mate.root.position.z,md=Math.hypot(mx,mz)||1,step=Math.min(md,speed*dt);
    mate.root.position.x+=mx/md*step;mate.root.position.z+=mz/md*step;
@@ -339,17 +358,20 @@ function update(dt){
    updatePlayerVisual(mate,dt,md>.65);
   });
   const defenderDistances=opponents.map(e=>Math.hypot(ball.x-e.root.position.x,ball.z-e.root.position.z));
-  const pressingIndex=defenderDistances[0]<=defenderDistances[1]?0:1;
+  const pressingIndex=defenderDistances.indexOf(Math.min(...defenderDistances));
   opponents.forEach((enemy,i)=>{
-   let tx,tz;
-   if(ball.owner==='rival'){tx=clamp(rival.root.position.x+4.5,-25,25);tz=clamp(rival.root.position.z+(i===0?-4.5:4.5),-15,15)}
-   else{
-    const target=ball.owner==='player'?player.root.position:ball;
-    if(i===pressingIndex){tx=target.x;tz=target.z}
-    else{tx=target.x-2.8;tz=target.z+(i===0?-4.5:4.5)}
+   let tx=enemy.awayX,tz=enemy.awayZ,speed=5.6;
+   const ballShift=clamp(ball.z*.18,-3.5,3.5);
+   if(ball.owner==='rival'){
+    tx=enemy.awayX+(enemy.awayX<6?-4: -1);
+    tz=enemy.awayZ+ballShift;
+   }else{
+    tx=enemy.awayX+clamp((ball.x-enemy.awayX)*.12,-4,4);
+    tz=enemy.awayZ+ballShift;
+    if(i===pressingIndex){tx=ball.x;tz=ball.z;speed=7}
    }
    tx=clamp(tx,-27,27);tz=clamp(tz,-16,16);
-   const ex=tx-enemy.root.position.x,ez=tz-enemy.root.position.z,ed=Math.hypot(ex,ez)||1,step=Math.min(ed,(i===pressingIndex?6.8:6)*dt);
+   const ex=tx-enemy.root.position.x,ez=tz-enemy.root.position.z,ed=Math.hypot(ex,ez)||1,step=Math.min(ed,speed*dt);
    enemy.root.position.x+=ex/ed*step;enemy.root.position.z+=ez/ed*step;
    if(ed>.25)enemy.root.rotation.y=Math.atan2(ex,ez);
    updatePlayerVisual(enemy,dt,ed>.65);
@@ -358,6 +380,16 @@ function update(dt){
    }
    if(!ball.owner&&Math.hypot(enemy.root.position.x-ball.x,enemy.root.position.z-ball.z)<.82){ball.owner='rival';ball.vx=ball.vz=0}
   });
+  // Goalkeepers track the ball laterally while staying close to their goal line.
+  const keeperHomeZ=clamp(ball.z*.72,-2.0,2.0);
+  const keeperAwayZ=clamp(ball.z*.72,-2.0,2.0);
+  for(const [keeper,gx,gz] of [[homeKeeper,-27.2,keeperHomeZ],[awayKeeper,27.2,keeperAwayZ]]){
+   const kx=gx-keeper.root.position.x,kz=gz-keeper.root.position.z;
+   const kd=Math.hypot(kx,kz)||1,ks=Math.min(kd,4.8*dt);
+   keeper.root.position.x+=kx/kd*ks;keeper.root.position.z+=kz/kd*ks;
+   if(kd>.2)keeper.root.rotation.y=Math.atan2(kx,kz);
+   updatePlayerVisual(keeper,dt,kd>.35);
+  }
  if(ball.owner==='player'){
   const a=player.root.rotation.y;
   const tx=player.root.position.x+Math.sin(a)*.82,tz=player.root.position.z+Math.cos(a)*.82;
@@ -439,9 +471,10 @@ function update(dt){
  }
 }
 function resetPositions(){
- player.root.position.set(-7,0,0);rival.root.position.set(7,0,0);
- teammates[0].root.position.set(-10,0,-7);teammates[1].root.position.set(-10,0,7);
- opponents[0].root.position.set(10,0,-7);opponents[1].root.position.set(10,0,7);
+ player.root.position.set(-12,0,0);rival.root.position.set(12,0,0);
+ teammates.forEach(m=>m.root.position.set(m.homeX,0,m.homeZ));
+ opponents.forEach(e=>e.root.position.set(e.awayX,0,e.awayZ));
+ homeKeeper.root.position.set(-27.2,0,0);awayKeeper.root.position.set(27.2,0,0);
  ball.x=-10.8;ball.z=0;ball.vx=ball.vz=0;ball.owner=null;ball.height=.31;
 }
 function render(){renderer.render(scene,camera)}
