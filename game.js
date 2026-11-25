@@ -39,9 +39,9 @@ const homeEl=document.getElementById('homeScore');
 const awayEl=document.getElementById('awayScore');
 const scene=new THREE.Scene();
 scene.background=new THREE.Color(0x8fc5d2);
-scene.fog=new THREE.Fog(0x8fc5d2,58,125);
+scene.fog=new THREE.Fog(0x8fc5d2,95,210);
 const camera=new THREE.PerspectiveCamera(43,1,.1,150);
-camera.position.set(0,30,40);
+camera.position.set(0,58,76);
 camera.lookAt(0,0,0);
 const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});
 renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.7));
@@ -54,7 +54,7 @@ scene.add(new THREE.HemisphereLight(0xdff6ff,0x31502c,2.0));
 const sun=new THREE.DirectionalLight(0xfff3d8,3.1);
 sun.position.set(-13,27,14);sun.castShadow=true;
 sun.shadow.mapSize.set(2048,2048);
-sun.shadow.camera.left=-27;sun.shadow.camera.right=27;sun.shadow.camera.top=22;sun.shadow.camera.bottom=-22;
+sun.shadow.camera.left=-58;sun.shadow.camera.right=58;sun.shadow.camera.top=38;sun.shadow.camera.bottom=-38;
 sun.shadow.bias=-.00025;scene.add(sun);
 const fill=new THREE.DirectionalLight(0x9ecbff,1.15);fill.position.set(18,13,-16);scene.add(fill);
 const mat=(color,roughness=.8,metalness=0)=>new THREE.MeshStandardMaterial({color,roughness,metalness});
@@ -74,10 +74,10 @@ turfTexture.wrapS=turfTexture.wrapT=THREE.RepeatWrapping;
 turfTexture.repeat.set(3,2);turfTexture.colorSpace=THREE.SRGBColorSpace;
 grassA.map=turfTexture;grassB.map=turfTexture;
 
-const field=new THREE.Mesh(new THREE.PlaneGeometry(60,38),grassA);field.rotation.x=-Math.PI/2;field.receiveShadow=true;scene.add(field);
-for(let i=0;i<15;i++){
- const strip=new THREE.Mesh(new THREE.PlaneGeometry(4,38),i%2?grassA:grassB);
- strip.rotation.x=-Math.PI/2;strip.position.set(-28+i*4,.006,0);strip.receiveShadow=true;scene.add(strip);
+const field=new THREE.Mesh(new THREE.PlaneGeometry(105,68),grassA);field.rotation.x=-Math.PI/2;field.receiveShadow=true;scene.add(field);
+for(let i=0;i<27;i++){
+ const strip=new THREE.Mesh(new THREE.PlaneGeometry(105/27,68),i%2?grassA:grassB);
+ strip.rotation.x=-Math.PI/2;strip.position.set(-52.5+(i+.5)*(105/27),.006,0);strip.receiveShadow=true;scene.add(strip);
 }
 function line(points,material=white,radius=.035){
  const curve=new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(p[0],.035,p[1])));
@@ -85,12 +85,12 @@ function line(points,material=white,radius=.035){
  scene.add(mesh);return mesh;
 }
 function rect(x1,z1,x2,z2){line([[x1,z1],[x2,z1],[x2,z2],[x1,z2],[x1,z1]])}
-rect(-29,-18,29,18);
-line([[0,-18],[0,18]]);
-const circlePts=[];for(let i=0;i<=80;i++){const a=i/80*Math.PI*2;circlePts.push([Math.cos(a)*5.2,Math.sin(a)*5.2])}line(circlePts);
+rect(-52.5,-34,52.5,34);
+line([[0,-34],[0,34]]);
+const circlePts=[];for(let i=0;i<=100;i++){const a=i/100*Math.PI*2;circlePts.push([Math.cos(a)*9.15,Math.sin(a)*9.15])}line(circlePts);
 const spot=(x,z)=>{const m=new THREE.Mesh(new THREE.CircleGeometry(.11,20),white);m.rotation.x=-Math.PI/2;m.position.set(x,.04,z);scene.add(m)};
-spot(0,0);spot(-20,0);spot(20,0);
-rect(-29,-7.2,-21,7.2);rect(21,-7.2,29,7.2);rect(-29,-3.6,-25,3.6);rect(25,-3.6,29,3.6);
+spot(0,0);spot(-41.5,0);spot(41.5,0);
+rect(-52.5,-20.15,-36,20.15);rect(36,-20.15,52.5,20.15);rect(-52.5,-9.16,-47,9.16);rect(47,-9.16,52.5,9.16);
 function stand(x,z,sx,sz,rotation=0){
  const base=new THREE.Mesh(new THREE.BoxGeometry(sx,2.4,sz),mat(0x263a36));
  base.position.set(x,1.05,z);base.rotation.y=rotation;base.castShadow=true;base.receiveShadow=true;scene.add(base);
@@ -99,7 +99,7 @@ function stand(x,z,sx,sz,rotation=0){
   step.position.set(x,.65+row*.48,z+(row-1.5)*.13);step.rotation.y=rotation;scene.add(step);
  }
 }
-stand(0,-21,64,4);stand(0,21,64,4);stand(-33,0,4,42);stand(33,0,4,42);
+stand(0,-37.5,108,5);stand(0,37.5,108,5);stand(-56,0,5,74);stand(56,0,5,74);
 
 // Thousands-seat atmosphere represented by compact, varied crowd silhouettes.
 const crowdMats=[0xd94f45,0xf0d36b,0xe9ecef,0x3f8edb,0x253b32,0x9b6bc4].map(c=>mat(c,.9));
@@ -109,16 +109,16 @@ for(let side of [-1,1]){
   for(let col=0;col<64;col++){
    if((col+row)%7===0)continue;
    const person=new THREE.Mesh(crowdGeo,crowdMats[(col*3+row*5)%crowdMats.length]);
-   person.position.set(-31+col*.98,1.75+row*.43,side*(22.15+row*.22));
+   person.position.set(-53+col*1.68,1.75+row*.43,side*(38.2+row*.22));
    person.scale.set(.85,1.35,.8);person.castShadow=false;scene.add(person);
   }
  }
 }
 for(let side of [-1,1]){
  for(let row=0;row<3;row++){
-  for(let col=0;col<25;col++){
+  for(let col=0;col<46;col++){
    const person=new THREE.Mesh(crowdGeo,crowdMats[(col+row*2)%crowdMats.length]);
-   person.position.set(side*(34.1+row*.22),1.7+row*.42,-18+col*1.5);
+   person.position.set(side*(57.1+row*.22),1.7+row*.42,-34+col*1.5);
    person.scale.set(.8,1.3,.8);scene.add(person);
   }
  }
@@ -126,35 +126,35 @@ for(let side of [-1,1]){
 // Animated-looking LED advertising fascia around the pitch.
 const boardMat=mat(0x102a25,.45,.2);
 for(const side of [-1,1]){
- const board=new THREE.Mesh(new THREE.BoxGeometry(62,.62,.22),boardMat);
- board.position.set(0,.36,side*21.05);scene.add(board);
+ const board=new THREE.Mesh(new THREE.BoxGeometry(106,.62,.22),boardMat);
+ board.position.set(0,.36,side*35.5);scene.add(board);
  const signCanvas=document.createElement('canvas');signCanvas.width=1024;signCanvas.height=64;
  const sc=signCanvas.getContext('2d');
  sc.fillStyle='#102a25';sc.fillRect(0,0,1024,64);
  sc.fillStyle='#c7ff83';sc.font='bold 34px Arial';sc.textAlign='center';
  sc.fillText('ULTIMATE FOOTBALL  •  PLAY WITH PASSION  •  ULTIMATE FOOTBALL',512,44);
  const signTex=new THREE.CanvasTexture(signCanvas);signTex.colorSpace=THREE.SRGBColorSpace;
- const sign=new THREE.Mesh(new THREE.PlaneGeometry(61.8,.52),new THREE.MeshBasicMaterial({map:signTex}));
- sign.position.set(0,.38,side*20.925);sign.rotation.y=side===1?0:Math.PI;scene.add(sign);
+ const sign=new THREE.Mesh(new THREE.PlaneGeometry(105,.52),new THREE.MeshBasicMaterial({map:signTex}));
+ sign.position.set(0,.38,side*35.36);sign.rotation.y=side===1?0:Math.PI;scene.add(sign);
 }
 
 function goal(x,sign){
  const group=new THREE.Group();const postMat=mat(0xffffff,.35,.35);
  const post=(y,z)=>{const m=new THREE.Mesh(new THREE.CylinderGeometry(.09,.09,y,12),postMat);m.position.set(x,y/2,z);m.castShadow=true;group.add(m)};
- post(2.5,-2.5);post(2.5,2.5);
- const bar=new THREE.Mesh(new THREE.CylinderGeometry(.09,.09,5,12),postMat);bar.rotation.x=Math.PI/2;bar.position.set(x,2.5,0);group.add(bar);
+ post(2.44,-3.66);post(2.44,3.66);
+ const bar=new THREE.Mesh(new THREE.CylinderGeometry(.09,.09,7.32,12),postMat);bar.rotation.x=Math.PI/2;bar.position.set(x,2.44,0);group.add(bar);
  const netMat=new THREE.MeshBasicMaterial({color:0xe8f4ed,wireframe:true,transparent:true,opacity:.25});
- const net=new THREE.Mesh(new THREE.BoxGeometry(1.8,2.5,5),netMat);net.position.set(x+sign*.9,1.25,0);group.add(net);
+ const net=new THREE.Mesh(new THREE.BoxGeometry(2.4,2.44,7.32),netMat);net.position.set(x+sign*1.2,1.22,0);group.add(net);
  scene.add(group);
 }
-goal(-29,-1);goal(29,1);
+goal(-52.5,-1);goal(52.5,1);
 for(let side of [-1,1]){
  for(let i=0;i<5;i++){
   const pole=new THREE.Mesh(new THREE.CylinderGeometry(.08,.13,9,8),metal);
-  pole.position.set(side*32.5,4.5,-16+i*8);pole.castShadow=true;scene.add(pole);
+  pole.position.set(side*58,4.5,-27+i*13.5);pole.castShadow=true;scene.add(pole);
   const lamp=new THREE.Mesh(new THREE.BoxGeometry(.9,.28,.65),mat(0xfff2bf,.25));
-  lamp.position.set(side*19.5,9,-8+i*4);scene.add(lamp);
-  const glow=new THREE.PointLight(0xffedc2,5,18,2);glow.position.set(side*32,8.7,-8+i*4);scene.add(glow);
+  lamp.position.set(side*35,9,-14+i*7);scene.add(lamp);
+  const glow=new THREE.PointLight(0xffedc2,5,18,2);glow.position.set(side*57,8.7,-14+i*7);scene.add(glow);
  }
 }
 function capsule(radius,length,material){
@@ -205,12 +205,12 @@ const player=makePlayer(0x2d8cff,0xffffff,10);
 const rival=makePlayer(0xe94e48,0xffd44c,9);
 // 4-3-3 formations: controlled player + 9 outfield teammates + goalkeeper.
 const homeSlots=[
- [-23,-15,2],[-23,-5,3],[-23,5,4],[-23,15,5],
- [-11,-10,6],[-11,10,8],[-4,0,7],[2,-8,9],[2,8,11]
+ [-40,-25,2],[-40,-8,3],[-40,8,4],[-40,25,5],
+ [-19,-17,6],[-19,17,8],[-7,0,7],[4,-14,9],[4,14,11]
 ];
 const awaySlots=[
- [23,-15,2],[23,-5,3],[23,5,4],[23,15,5],
- [11,-10,6],[11,10,8],[4,0,7],[-2,-8,10],[-2,8,11]
+ [40,-25,2],[40,-8,3],[40,8,4],[40,25,5],
+ [19,-17,6],[19,17,8],[7,0,7],[-4,-14,10],[-4,14,11]
 ];
 const teammates=homeSlots.map(([x,z,n])=>{
  const p=makePlayer(0x2d8cff,0xffffff,n);
@@ -222,8 +222,8 @@ const opponents=awaySlots.map(([x,z,n])=>{
 });
 const homeKeeper=makePlayer(0x22a878,0xffffff,1);
 const awayKeeper=makePlayer(0xf0b33d,0x202020,1);
-player.root.position.set(-12,0,0);rival.root.position.set(12,0,0);
-homeKeeper.root.position.set(-27.2,0,0);awayKeeper.root.position.set(27.2,0,0);
+player.root.position.set(-21,0,0);rival.root.position.set(21,0,0);
+homeKeeper.root.position.set(-50,0,0);awayKeeper.root.position.set(50,0,0);
 for(const p of [rival,...teammates,...opponents,homeKeeper,awayKeeper])p.root.rotation.y=-Math.PI/2;
 const ballGroup=new THREE.Group();scene.add(ballGroup);
 const ballMesh=new THREE.Mesh(new THREE.SphereGeometry(.31,24,18),mat(0xffffff,.34));
@@ -232,7 +232,7 @@ const patches=mat(0x18201c,.5);
 for(let i=0;i<5;i++){const p=new THREE.Mesh(new THREE.CircleGeometry(.105,5),patches);p.position.set(Math.cos(i*2*Math.PI/5)*.305,Math.sin(i*2*Math.PI/5)*.305,0);p.rotation.z=i*.2;ballMesh.add(p)}
 const ballShadow=new THREE.Mesh(new THREE.CircleGeometry(.4,20),new THREE.MeshBasicMaterial({color:0x07140c,transparent:true,opacity:.3}));
 ballShadow.rotation.x=-Math.PI/2;ballShadow.position.y=.025;scene.add(ballShadow);
-const ball={x:-10.8,z:0,vx:0,vz:0,owner:null,height:.31,spin:0};
+const ball={x:-18.9,z:0,vx:0,vz:0,owner:null,height:.31,spin:0};
 const state={running:false,last:0,elapsed:0,home:0,away:0};
 const input={x:0,z:0,sprint:false};
 let cameraMode='broadcast';
@@ -267,7 +267,7 @@ function tryTackle(){
 }
 function checkGoal(){
  // Goal mouths are 4.5 m wide and 2.5 m high; the ball must fully cross the line.
- if(Math.abs(ball.x)>28.85&&Math.abs(ball.z)<2.458&&ball.height<2.35){
+ if(Math.abs(ball.x)>52.35&&Math.abs(ball.z)<3.58&&ball.height<2.38){
   scoreGoal(ball.x>0?'home':'away');
   return true;
  }
@@ -313,23 +313,23 @@ function update(dt){
   dx/=worldLength;dz/=worldLength;
   player.dx=dx;player.dz=dz;
   const speed=input.sprint?8.7:6.1;
-  player.root.position.x=clamp(player.root.position.x+dx*speed*dt,-28,28);
-  player.root.position.z=clamp(player.root.position.z+dz*speed*dt,-17,17);
+  player.root.position.x=clamp(player.root.position.x+dx*speed*dt,-50,50);
+  player.root.position.z=clamp(player.root.position.z+dz*speed*dt,-32,32);
   player.root.rotation.y=Math.atan2(dx,dz);
   moving=true;
  }
  updatePlayerVisual(player,dt,moving);
- const rivalTarget=ball.owner==='player'?player.root.position:(ball.owner==='rival'?{x:-23,z:clamp(ball.z*.35,-1.25,1.25)}:ball);
+ const rivalTarget=ball.owner==='player'?player.root.position:(ball.owner==='rival'?{x:-41.5,z:clamp(ball.z*.35,-2.5,2.5)}:ball);
   const rx=rivalTarget.x-rival.root.position.x,rz=rivalTarget.z-rival.root.position.z,rd=Math.hypot(rx,rz)||1;
   if(rd>.65){
    const speed=ball.owner==='rival'?5.25:6.5;
-   rival.root.position.x=clamp(rival.root.position.x+rx/rd*speed*dt,-28,28);
-   rival.root.position.z=clamp(rival.root.position.z+rz/rd*speed*dt,-17,17);
+   rival.root.position.x=clamp(rival.root.position.x+rx/rd*speed*dt,-50,50);
+   rival.root.position.z=clamp(rival.root.position.z+rz/rd*speed*dt,-32,32);
    rival.root.rotation.y=Math.atan2(rx,rz);
   }
-  if(ball.owner==='rival'&&rival.root.position.x<-18&&aiShotCooldown<=0){
-   const aimZ=clamp(-ball.z*.72,-1.35,1.35),sx=-29.5-ball.x,sz=aimZ-ball.z,len=Math.hypot(sx,sz)||1;
-   ball.owner=null;ball.vx=sx/len*19;ball.vz=sz/len*19;ball.height=.48;aiShotCooldown=1.65;
+  if(ball.owner==='rival'&&rival.root.position.x<-34&&aiShotCooldown<=0){
+   const aimZ=clamp(-ball.z*.72,-2.5,2.5),sx=-53-ball.x,sz=aimZ-ball.z,len=Math.hypot(sx,sz)||1;
+   ball.owner=null;ball.vx=sx/len*22;ball.vz=sz/len*22;ball.height=.48;aiShotCooldown=1.65;
   }else if(ball.owner==='player'&&rd<1.05&&aiStealCooldown<=0){
    ball.owner='rival';ball.vx=ball.vz=0;aiStealCooldown=1.1;
   }else if(!ball.owner&&rd<.9){ball.owner='rival';ball.vx=ball.vz=0}
@@ -351,7 +351,7 @@ function update(dt){
     tz=homeZ+ballShift;
     if(i===looseMateIndex&&mateDistances[i]<13){tx=ball.x;tz=ball.z;speed=7.1}
    }
-   tx=clamp(tx,-27,27);tz=clamp(tz,-16,16);
+   tx=clamp(tx,-48,48);tz=clamp(tz,-30,30);
    const mx=tx-mate.root.position.x,mz=tz-mate.root.position.z,md=Math.hypot(mx,mz)||1,step=Math.min(md,speed*dt);
    mate.root.position.x+=mx/md*step;mate.root.position.z+=mz/md*step;
    if(md>.25)mate.root.rotation.y=Math.atan2(mx,mz);
@@ -381,9 +381,9 @@ function update(dt){
    if(!ball.owner&&Math.hypot(enemy.root.position.x-ball.x,enemy.root.position.z-ball.z)<.82){ball.owner='rival';ball.vx=ball.vz=0}
   });
   // Goalkeepers track the ball laterally while staying close to their goal line.
-  const keeperHomeZ=clamp(ball.z*.72,-2.0,2.0);
+  const keeperHomeZ=clamp(ball.z*.72,-3.0,3.0);
   const keeperAwayZ=clamp(ball.z*.72,-2.0,2.0);
-  for(const [keeper,gx,gz] of [[homeKeeper,-27.2,keeperHomeZ],[awayKeeper,27.2,keeperAwayZ]]){
+  for(const [keeper,gx,gz] of [[homeKeeper,-50,keeperHomeZ],[awayKeeper,50,keeperAwayZ]]){
    const kx=gx-keeper.root.position.x,kz=gz-keeper.root.position.z;
    const kd=Math.hypot(kx,kz)||1,ks=Math.min(kd,4.8*dt);
    keeper.root.position.x+=kx/kd*ks;keeper.root.position.z+=kz/kd*ks;
@@ -438,14 +438,14 @@ function update(dt){
  // The ball and controlled player stay in view while the pitch remains readable.
  const px=player.root.position.x,pz=player.root.position.z,bx=ball.x,bz=ball.z;
  if(cameraMode==='broadcast'){
-  const playX=clamp(px*.42+bx*.58,-13,13);
-  const playZ=clamp(pz*.30+bz*.70,-5.5,5.5);
+  const playX=clamp(px*.42+bx*.58,-24,24);
+  const playZ=clamp(pz*.30+bz*.70,-10,10);
   const spread=Math.hypot(px-bx,pz-bz);
-  const desiredHeight=34+Math.min(5,spread*.22);
+  const desiredHeight=57+Math.min(8,spread*.12);
   const follow=1-Math.exp(-dt*2.4);
   camera.position.x+=(playX*.20-camera.position.x)*follow;
   camera.position.y+=(desiredHeight-camera.position.y)*(1-Math.exp(-dt*1.8));
-  camera.position.z+=(43-camera.position.z)*follow;
+  camera.position.z+=(73-camera.position.z)*follow;
   camera.lookAt(playX*.48,0,playZ*.20);
  }else if(cameraMode==='behind'){
   // Track the player's actual facing direction continuously, including while
@@ -454,28 +454,28 @@ function update(dt){
   const targetYaw=player.root.rotation.y;
   const angleDelta=Math.atan2(Math.sin(targetYaw-cameraYaw),Math.cos(targetYaw-cameraYaw));
   cameraYaw+=angleDelta*(1-Math.exp(-dt*4.2));
-  const distance=9.2;
+  const distance=15.5;
   const desiredX=px-Math.sin(cameraYaw)*distance;
   const desiredZ=pz-Math.cos(cameraYaw)*distance;
   const follow=1-Math.exp(-dt*4.0);
   camera.position.x+=(desiredX-camera.position.x)*follow;
-  camera.position.y+=(6.4-camera.position.y)*(1-Math.exp(-dt*3.0));
+  camera.position.y+=(10.5-camera.position.y)*(1-Math.exp(-dt*3.0));
   camera.position.z+=(desiredZ-camera.position.z)*follow;
   camera.lookAt(px+Math.sin(cameraYaw)*4.1,1.05,pz+Math.cos(cameraYaw)*4.1);
  }else{
   const centerX=px*.42+bx*.58;
   camera.position.x+=(centerX*.28-camera.position.x)*Math.min(1,dt*1.7);
-  camera.position.y+=(35-camera.position.y)*Math.min(1,dt*1.7);
-  camera.position.z+=(46-camera.position.z)*Math.min(1,dt*1.7);
+  camera.position.y+=(59-camera.position.y)*Math.min(1,dt*1.7);
+  camera.position.z+=(76-camera.position.z)*Math.min(1,dt*1.7);
   camera.lookAt(centerX*.45,0,0);
  }
 }
 function resetPositions(){
- player.root.position.set(-12,0,0);rival.root.position.set(12,0,0);
+ player.root.position.set(-21,0,0);rival.root.position.set(21,0,0);
  teammates.forEach(m=>m.root.position.set(m.homeX,0,m.homeZ));
  opponents.forEach(e=>e.root.position.set(e.awayX,0,e.awayZ));
- homeKeeper.root.position.set(-27.2,0,0);awayKeeper.root.position.set(27.2,0,0);
- ball.x=-10.8;ball.z=0;ball.vx=ball.vz=0;ball.owner=null;ball.height=.31;
+ homeKeeper.root.position.set(-50,0,0);awayKeeper.root.position.set(50,0,0);
+ ball.x=-18.9;ball.z=0;ball.vx=ball.vz=0;ball.owner=null;ball.height=.31;
 }
 function render(){renderer.render(scene,camera)}
 function resize(){
@@ -484,10 +484,10 @@ function resize(){
  camera.aspect=aspect;
  if(aspect<1){
   camera.fov=68;
-  camera.position.set(0,32,42);
+  camera.position.set(0,56,74);
  }else{
-  camera.fov=47;
-  camera.position.set(0,38,48);
+  camera.fov=52;
+  camera.position.set(0,60,78);
  }
  camera.updateProjectionMatrix();
  camera.lookAt(0,0,0);
