@@ -543,6 +543,8 @@ function start(){
  state.running=true;state.last=performance.now();requestAnimationFrame(frame);
 }
 playBtn.addEventListener('click',start);
+document.getElementById('playBtnHero')?.addEventListener('click',start);
+settingsBtn.addEventListener('click',()=>{menuMessage.textContent='НАСТРОЙКИ: КНОПКА «КАМЕРА» В МАТЧЕ МЕНЯЕТ РАКУРС';});
 
 const lessons=[
  {title:'ДВИЖЕНИЕ',text:'Передвигай футболиста левым джойстиком. Толкай его в ту сторону, куда хочешь бежать.',tip:'На телефоне: удерживай джойстик и плавно меняй направление. Отпусти, чтобы остановиться.'},
