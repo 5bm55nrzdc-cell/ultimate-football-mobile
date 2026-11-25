@@ -257,7 +257,7 @@ const input={x:0,z:0,sprint:false};
 let cameraMode='broadcast';
 let cameraYaw=0;
 const cameraBtn=document.getElementById('cameraBtn');
-let tackleCooldown=0,aiStealCooldown=0,aiShotCooldown=0;
+let tackleCooldown=0;
 const goalFlash={until:0};
 function scoreGoal(side){
  if(goalFlash.until>state.elapsed)return;
@@ -361,7 +361,7 @@ function update(dt){
    if(d>.22)bot.root.rotation.y=Math.atan2(dx,dz);
    updatePlayerVisual(bot,dt,d>.55);
   };
-  const homeHasBall=isHomeOwner(ball.owner),awayHasBall=isAwayOwner(ball.owner),loose=ball.owner===null;
+  const homeHasBall=isHomeOwner(ball.owner),awayHasBall=isAwayOwner(ball.owner);
   const homeChaser=nearest(teammates,ball.x,ball.z),awayChaser=nearest(opponents,ball.x,ball.z);
   const currentCarrier=getBallCarrier();
   const pressTarget=currentCarrier?currentCarrier.root.position:{x:ball.x,z:ball.z};
