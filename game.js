@@ -588,15 +588,28 @@ sprint.addEventListener('pointerdown',e=>{e.preventDefault();input.sprint=true})
 ['pointerup','pointercancel','pointerleave'].forEach(ev=>sprint.addEventListener(ev,()=>input.sprint=false));
 function kick(type){
  if(ball.owner!=='player'&&dist(player,ball)>1.35)return;
- ball.owner=null;
  let dx,dz,power;
  if(type==='shoot'){
-  const goalX=29.5;
-  dx=goalX-ball.x;dz=-ball.z*.28;power=19.5;
+  // The controlled team attacks the goal on the positive X side.
+  dx=29.5-ball.x;dz=-ball.z*.28;power=19.5;
+ }else{
+  // Pass to the closest available teammate instead of blindly following
+  // the joystick direction. Scale power so the ball slows near the receiver.
+  const receiver=teammates.reduce((best,mate)=>{
+   const d=Math.hypot(mate.root.position.x-player.root.position.x,mate.root.position.z-player.root.position.z);
+   return !best||d<best.distance?{mate,distance:d}:best;
+  },null);
+  if(receiver){
+   dx=receiver.mate.root.position.x-ball.x;
+   dz=receiver.mate.root.position.z-ball.z;
+   power=clamp(receiver.distance*.78,5,11);
+  }else{
+   dx=player.dx;dz=player.dz;power=10.5;
+  }
  }
- else if(Math.hypot(input.x,input.z)>.2){dx=input.x;dz=input.z;power=10.5}
- else{dx=player.dx;dz=player.dz;power=10.5}
- const len=Math.hypot(dx,dz)||1;ball.vx=dx/len*power;ball.vz=dz/len*power;ball.height=.38;
+ const len=Math.hypot(dx,dz)||1;
+ ball.owner=null;
+ ball.vx=dx/len*power;ball.vz=dz/len*power;ball.height=.38;
 }
 document.getElementById('passBtn').addEventListener('pointerdown',e=>{e.preventDefault();kick('pass')});
 document.getElementById('shootBtn').addEventListener('pointerdown',e=>{e.preventDefault();kick('shoot')});
