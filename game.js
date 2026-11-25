@@ -234,6 +234,23 @@ for(let i=0;i<5;i++){const p=new THREE.Mesh(new THREE.CircleGeometry(.105,5),pat
 const ballShadow=new THREE.Mesh(new THREE.CircleGeometry(.4,20),new THREE.MeshBasicMaterial({color:0x07140c,transparent:true,opacity:.3}));
 ballShadow.rotation.x=-Math.PI/2;ballShadow.position.y=.025;scene.add(ballShadow);
 const ball={x:-18.9,z:0,vx:0,vz:0,owner:null,height:.31,spin:0};
+const homeActors=[player,...teammates],awayActors=[rival,...opponents];
+let aiDecisionCooldown=0;
+function ownerKey(actor,side){
+ if(actor===player)return 'player';if(actor===rival)return 'rival';
+ const index=(side==='home'?teammates:opponents).indexOf(actor);
+ return index<0?null:(side==='home'?'mate:':'enemy:')+index;
+}
+function getBallCarrier(){
+ if(ball.owner==='player')return player;if(ball.owner==='rival')return rival;
+ if(typeof ball.owner==='string'&&ball.owner.startsWith('mate:'))return teammates[Number(ball.owner.slice(5))]||null;
+ if(typeof ball.owner==='string'&&ball.owner.startsWith('enemy:'))return opponents[Number(ball.owner.slice(6))]||null;
+ return null;
+}
+function isHomeOwner(o){return o==='player'||(typeof o==='string'&&o.startsWith('mate:'))}
+function isAwayOwner(o){return o==='rival'||(typeof o==='string'&&o.startsWith('enemy:'))}
+function setPossession(actor,side){ball.owner=ownerKey(actor,side);ball.vx=0;ball.vz=0;}
+
 const state={running:false,last:0,elapsed:0,home:0,away:0};
 let tutorialActive=false,tutorialStep=0,tutorialDistance=0;
 const input={x:0,z:0,sprint:false};
@@ -250,24 +267,16 @@ function scoreGoal(side){
  resetPositions();
 }
 function tryTackle(){
- if(tackleCooldown>0)return;
- tackleCooldown=.48;
- const d=dist(player,ball);
- if(ball.owner==='rival'&&d<2.15){
-  const px=player.root.position.x,pz=player.root.position.z;
-  const rx=rival.root.position.x,rz=rival.root.position.z;
-  const facing=Math.hypot(px-rx,pz-rz)||1;
-  // A successful close challenge knocks the ball loose toward the player's feet.
-  ball.owner='player';ball.vx=0;ball.vz=0;
-  ball.x=px+(rx-px)/facing*.48;ball.z=pz+(rz-pz)/facing*.48;
+  if(tackleCooldown>0)return;
+  tackleCooldown=.48;
+  const carrier=getBallCarrier();
+  if(carrier&&isAwayOwner(ball.owner)&&dist(player,carrier)<2.45){
+   ball.owner='player';ball.vx=0;ball.vz=0;
+   ball.x=player.root.position.x+Math.sin(player.root.rotation.y)*.52;
+   ball.z=player.root.position.z+Math.cos(player.root.rotation.y)*.52;
    if(tutorialActive&&tutorialStep===5)advanceTutorial();
- }else if(!ball.owner&&d<1.9){
-  ball.owner='player';ball.vx=0;ball.vz=0;
- }else if(ball.owner==='player'){
-  // No accidental self-tackle: keep possession.
-  return;
+  }else if(!ball.owner&&dist(player,ball)<1.9){ball.owner='player';ball.vx=0;ball.vz=0;}
  }
-}
 function checkGoal(){
  // Goal mouths are 4.5 m wide and 2.5 m high; the ball must fully cross the line.
  if(Math.abs(ball.x)>52.35&&Math.abs(ball.z)<3.58&&ball.height<2.38){
@@ -323,20 +332,15 @@ function update(dt){
  }
  updatePlayerVisual(player,dt,moving);
  if(tutorialActive&&moving&&(tutorialStep!==1||input.sprint))updateTutorialDistance((input.sprint?8.7:6.1)*dt);
- const rivalTarget=tutorialActive&&tutorialStep===5?player.root.position:(ball.owner==='player'?player.root.position:(ball.owner==='rival'?{x:-41.5,z:clamp(ball.z*.35,-2.5,2.5)}:ball));
+ const rivalTarget=tutorialActive&&tutorialStep===5?player.root.position:(isHomeOwner(ball.owner)?player.root.position:(isAwayOwner(ball.owner)?{x:-41.5,z:clamp(ball.z*.35,-2.5,2.5)}:ball));
   const rx=rivalTarget.x-rival.root.position.x,rz=rivalTarget.z-rival.root.position.z,rd=Math.hypot(rx,rz)||1;
   if(rd>.65){
-   const speed=ball.owner==='rival'?5.25:6.5;
+   const speed=isAwayOwner(ball.owner)?5.25:6.5;
    rival.root.position.x=clamp(rival.root.position.x+rx/rd*speed*dt,-50,50);
    rival.root.position.z=clamp(rival.root.position.z+rz/rd*speed*dt,-32,32);
    rival.root.rotation.y=Math.atan2(rx,rz);
   }
-  if(ball.owner==='rival'&&rival.root.position.x<-34&&aiShotCooldown<=0){
-   const aimZ=clamp(-ball.z*.72,-2.5,2.5),sx=-53-ball.x,sz=aimZ-ball.z,len=Math.hypot(sx,sz)||1;
-   ball.owner=null;ball.vx=sx/len*22;ball.vz=sz/len*22;ball.height=.48;aiShotCooldown=1.65;
-  }else if(ball.owner==='player'&&rd<1.05&&aiStealCooldown<=0){
-   ball.owner='rival';ball.vx=ball.vz=0;aiStealCooldown=1.1;
-  }else if(!ball.owner&&rd<.9){ball.owner='rival';ball.vx=ball.vz=0}
+  if(!ball.owner&&rd<.9){setPossession(rival,'away')}
   updatePlayerVisual(rival,dt,rd>.65);
   // Autonomous team AI: react to possession, open space, pressure and nearby players.
   const nearest=(arr,x,z)=>arr.reduce((best,p,i)=>{
@@ -356,7 +360,7 @@ function update(dt){
    if(d>.22)bot.root.rotation.y=Math.atan2(dx,dz);
    updatePlayerVisual(bot,dt,d>.55);
   };
-  const homeHasBall=ball.owner==='player',awayHasBall=ball.owner==='rival',loose=ball.owner===null;
+  const homeHasBall=isHomeOwner(ball.owner),awayHasBall=isAwayOwner(ball.owner),loose=ball.owner===null;
   const homeChaser=nearest(teammates,ball.x,ball.z),awayChaser=nearest(opponents,ball.x,ball.z);
   const homePress=nearest(teammates,rival.root.position.x,rival.root.position.z);
   const awayPress=nearest(opponents,player.root.position.x,player.root.position.z);
@@ -383,7 +387,35 @@ function update(dt){
    }
    moveBot(mate,tx,tz,speed,teammates);
   });
-  opponents.forEach((enemy,i)=>{
+  // AI carrier decisions: carry into space, pass when pressed, shoot near goal.
+   aiDecisionCooldown=Math.max(0,aiDecisionCooldown-dt);
+   const activeCarrier=getBallCarrier();
+   if(activeCarrier&&activeCarrier!==player){
+    const homeCarrier=isHomeOwner(ball.owner),direction=homeCarrier?1:-1,root=activeCarrier.root;
+    const goalX=direction*52.5,attackZ=clamp(-ball.z*.28,-2.7,2.7);
+    const defending=homeCarrier?opponents:homeActors;
+    const pressure=defending.reduce((best,p)=>Math.min(best,Math.hypot(p.root.position.x-root.position.x,p.root.position.z-root.position.z)),Infinity);
+    const distanceToGoal=Math.abs(goalX-root.position.x);
+    if(aiDecisionCooldown<=0&&(distanceToGoal<23||pressure<3.2)){
+     const options=(homeCarrier?homeActors:awayActors).filter(p=>p!==activeCarrier)
+      .map(p=>({p,forward:(p.root.position.x-root.position.x)*direction,space:defending.reduce((d,e)=>Math.min(d,Math.hypot(e.root.position.x-p.root.position.x,e.root.position.z-p.root.position.z)),Infinity)}))
+      .filter(o=>o.forward>3).sort((x,y)=>(y.forward+y.space*.45)-(x.forward+x.space*.45));
+     if(distanceToGoal<17&&pressure>2.3){
+      const dx=goalX-root.position.x,dz=attackZ-root.position.z,len=Math.hypot(dx,dz)||1;
+      ball.owner=null;ball.vx=dx/len*20;ball.vz=dz/len*20;ball.height=.52;
+     }else if(options[0]&&pressure<3.2){
+      const receiver=options[0].p,dx=receiver.root.position.x-root.position.x,dz=receiver.root.position.z-root.position.z,len=Math.hypot(dx,dz)||1,power=clamp(len*.82,7,13);
+      ball.owner=null;ball.vx=dx/len*power;ball.vz=dz/len*power;ball.height=.38;
+     }
+     aiDecisionCooldown=.85+Math.random()*.55;
+    }
+    if(ball.owner){
+     const dx=goalX-root.position.x,dz=attackZ-root.position.z,len=Math.hypot(dx,dz)||1,stride=Math.min(len,3.15*dt);
+     root.rotation.y=Math.atan2(dx,dz);root.position.x+=dx/len*stride;root.position.z+=dz/len*stride;
+     updatePlayerVisual(activeCarrier,dt,stride>.02);
+    }
+   }
+   opponents.forEach((enemy,i)=>{
    const bx=ball.x,bz=ball.z,baseX=enemy.awayX,baseZ=enemy.awayZ;
    const forward=baseX<0,mid=baseX<25&&baseX>=0;
    let tx=baseX,tz=baseZ,speed=5.9;
@@ -412,14 +444,11 @@ function update(dt){
    if(kd>.2)keeper.root.rotation.y=Math.atan2(kx,kz);
    updatePlayerVisual(keeper,dt,kd>.35);
   }
- if(ball.owner==='player'){
-  const a=player.root.rotation.y;
-  const tx=player.root.position.x+Math.sin(a)*.82,tz=player.root.position.z+Math.cos(a)*.82;
+ const carrier=getBallCarrier();
+ if(carrier){
+  const a=carrier.root.rotation.y,offset=carrier===player?.82:.76;
+  const tx=carrier.root.position.x+Math.sin(a)*offset,tz=carrier.root.position.z+Math.cos(a)*offset;
   ball.x+=(tx-ball.x)*Math.min(1,dt*14);ball.z+=(tz-ball.z)*Math.min(1,dt*14);ball.vx=ball.vz=0;
- }else if(ball.owner==='rival'){
-  const a=rival.root.rotation.y;
-  ball.x+=(rival.root.position.x+Math.sin(a)*.82-ball.x)*Math.min(1,dt*12);
-  ball.z+=(rival.root.position.z+Math.cos(a)*.82-ball.z)*Math.min(1,dt*12);
  }else{
   ball.x+=ball.vx*dt;ball.z+=ball.vz*dt;
   const drag=Math.pow(.987,dt*60);ball.vx*=drag;ball.vz*=drag;
@@ -429,11 +458,17 @@ function update(dt){
   // Goal-line and post collisions are resolved below after ball integration.
   if(Math.abs(ball.x)>53.8&&Math.abs(ball.z)>3.7){ball.x=clamp(ball.x,-53.8,53.8);ball.vx*=-.55}
   if(Math.abs(ball.x)>53.8&&Math.abs(ball.z)<3.7&&ball.height>=2.38){ball.x=clamp(ball.x,-53.8,53.8);ball.vx*=-.55}
-  if(dist(player,ball)<.95&&Math.hypot(ball.vx,ball.vz)<5)ball.owner='player';
-  if(dist(rival,ball)<.88){ball.owner='rival';ball.vx=ball.vz=0}
+  if(Math.hypot(ball.vx,ball.vz)<7){
+   let nearestActor=null,nearestSide=null,nearestDistance=1.05;
+   for(const [side,actors] of [['home',homeActors],['away',awayActors]])for(const actor of actors){
+    const d=Math.hypot(actor.root.position.x-ball.x,actor.root.position.z-ball.z);
+    if(d<nearestDistance){nearestDistance=d;nearestActor=actor;nearestSide=side;}
+   }
+   if(nearestActor)setPossession(nearestActor,nearestSide);
+  }
  }
  // Goalkeepers react to shots on target and parry them back into play.
- if(ball.owner===null&&ball.height<2.35){
+ if(!getBallCarrier()&&ball.height<2.35){
   const homeSaveDist=Math.hypot(ball.x-homeKeeper.root.position.x,ball.z-homeKeeper.root.position.z);
   const awaySaveDist=Math.hypot(ball.x-awayKeeper.root.position.x,ball.z-awayKeeper.root.position.z);
   if(ball.x<-44&&ball.vx<0&&homeSaveDist<2.35){
