@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#071b13">
 <title>Ultimate Football Mobile</title>
-<link rel="stylesheet" href="style.css?v=20261124k">
+<link rel="stylesheet" href="style.css?v=20261125f">
 </head>
 <body>
 <main class="game">
@@ -17,32 +17,40 @@
   <section class="pitch-wrap">
     <canvas id="pitch" width="1200" height="720" aria-label="Футбольное поле"></canvas>
     <div class="overlay" id="overlay">
-    <div class="start-card main-menu" id="mainMenu">
-      <div class="menu-topline">
-        <div class="menu-brand"><span class="brand-mark">U</span><span>ULTIMATE<br><b>FOOTBALL</b></span></div>
-        <span class="season-label">SEASON 01 <i></i> MOBILE</span>
-      </div>
-      <div class="menu-layout">
-        <nav class="menu-navigation" aria-label="Главное меню">
-          <p class="menu-kicker">ГЛАВНОЕ МЕНЮ</p>
-          <button id="playBtn"><span class="nav-number">01</span><span>ИГРАТЬ</span><span class="nav-arrow">›</span></button>
-          <button class="secondary-menu-btn" id="trainingBtn"><span class="nav-number">02</span><span>АКАДЕМИЯ</span><span class="nav-arrow">›</span></button>
-          <button class="secondary-menu-btn" id="profileBtn"><span class="nav-number">03</span><span>МОЙ ПРОФИЛЬ</span><span class="nav-arrow">›</span></button>
-          <button class="secondary-menu-btn" id="settingsBtn"><span class="nav-number">04</span><span>НАСТРОЙКИ</span><span class="nav-arrow">›</span></button>
-        </nav>
-        <section class="menu-feature">
-          <div class="feature-orbit"></div>
-          <div class="feature-top"><span class="live-dot"></span> ТВОЯ ФУТБОЛЬНАЯ ИСТОРИЯ</div>
-          <div class="feature-art"><span class="feature-ball">⚽</span><span class="feature-lines"></span></div>
-          <p class="feature-overline">ВЫХОДИ НА ПОЛЕ</p>
-          <h1>ТВОЯ ИГРА.<br><em>ТВОИ ПРАВИЛА.</em></h1>
-          <p class="menu-subtitle">Создай моменты, забивай голы и веди свою команду к победе.</p>
-          <div class="feature-meta"><span><b>11 × 11</b> ФОРМАТ МАТЧА</span><span><b>90</b> МИНУТ ФУТБОЛА</span></div>
+    <div class="start-card main-menu ef-menu" id="mainMenu">
+      <header class="ef-topbar">
+        <div class="ef-logo"><span>U</span><b>ULTIMATE FOOTBALL</b></div>
+        <div class="ef-season">MOBILE SEASON <strong>01</strong></div>
+        <button class="ef-user" id="profileBtn" type="button"><span class="ef-avatar">G</span><span>ГОСТЬ<br><small>МОЙ ПРОФИЛЬ</small></span></button>
+      </header>
+      <div class="ef-main">
+        <aside class="ef-sidebar">
+          <div class="ef-side-caption">ГЛАВНОЕ МЕНЮ</div>
+          <button class="ef-nav-active" id="playBtn" type="button"><span>⚽</span><b>МАТЧ</b><i>›</i></button>
+          <button id="trainingBtn" type="button"><span>◎</span><b>ТРЕНИРОВКА</b><i>›</i></button>
+          <button id="settingsBtn" type="button"><span>⚙</span><b>НАСТРОЙКИ</b><i>›</i></button>
+          <div class="ef-side-note"><span class="ef-online"></span> ЛОКАЛЬНЫЙ РЕЖИМ</div>
+        </aside>
+        <section class="ef-hero">
+          <div class="ef-hero-bg"></div>
+          <div class="ef-hero-copy">
+            <div class="ef-tag"><span></span> НОВЫЙ СЕЗОН · 2026</div>
+            <p>ТВОЙ ПУТЬ НАЧИНАЕТСЯ ЗДЕСЬ</p>
+            <h1>ВРЕМЯ<br><em>ИГРАТЬ.</em></h1>
+            <div class="ef-hero-sub">Собери команду. Выходи на поле. Создавай историю.</div>
+            <button class="ef-cta" id="playBtnHero" type="button">НАЧАТЬ МАТЧ <b>›</b></button>
+          </div>
+          <div class="ef-player-art" aria-hidden="true"><div class="ef-player-halo"></div><div class="ef-player-silhouette"><span></span></div><div class="ef-ball-art">⚽</div></div>
+          <div class="ef-hero-index">01 <span>/ 03</span></div>
         </section>
       </div>
-      <div class="menu-bottomline"><span id="menuMessage">ГОСТЕВОЙ ПРОФИЛЬ · ЛОКАЛЬНАЯ ИГРА</span><span>ULTIMATE FOOTBALL <b>© 2026</b></span></div>
-    </div>
-  </div>
+      <section class="ef-quick">
+        <div class="ef-quick-card"><span class="ef-quick-icon">🏟</span><div><small>РЕЖИМ</small><b>БЫСТРЫЙ МАТЧ</b></div><i>›</i></div>
+        <div class="ef-quick-card"><span class="ef-quick-icon">🎯</span><div><small>РАЗВИТИЕ</small><b>АКАДЕМИЯ</b></div><i>›</i></div>
+        <div class="ef-quick-card"><span class="ef-quick-icon">👤</span><div><small>АККАУНТ</small><b>ГОСТЕВОЙ ПРОФИЛЬ</b></div><i>›</i></div>
+      </section>
+      <footer class="ef-footer"><span id="menuMessage">ГОСТЕВОЙ ПРОФИЛЬ · ЛОКАЛЬНАЯ ИГРА</span><span>ULTIMATE FOOTBALL <b>© 2026</b></span></footer>
+    </div> </div>
   <div class="auth-overlay hidden" id="authOverlay">
     <div class="auth-card">
       <p class="eyebrow">ULTIMATE ACCOUNT</p>
