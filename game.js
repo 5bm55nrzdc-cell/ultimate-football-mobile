@@ -601,11 +601,12 @@ function update(dt){
   // looking from the wrong side during turns.
   const targetYaw=player.root.rotation.y;
   const angleDelta=Math.atan2(Math.sin(targetYaw-cameraYaw),Math.cos(targetYaw-cameraYaw));
-  cameraYaw+=angleDelta*(1-Math.exp(-dt*8.0));
-  const distance=13.2;
+  cameraYaw+=angleDelta*(1-Math.exp(-dt*9.5));
+  // Slightly closer broadcast-gameplay framing, with stronger damping at 60/30 FPS.
+  const distance=12.0;
   const desiredX=px-Math.sin(cameraYaw)*distance;
   const desiredZ=pz-Math.cos(cameraYaw)*distance;
-  const follow=1-Math.exp(-dt*9.0);
+  const follow=1-Math.exp(-dt*10.0);
   camera.position.x+=(desiredX-camera.position.x)*follow;
   camera.position.y+=(8.8-camera.position.y)*(1-Math.exp(-dt*6.5));
   camera.position.z+=(desiredZ-camera.position.z)*follow;
