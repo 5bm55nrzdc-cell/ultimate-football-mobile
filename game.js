@@ -45,7 +45,7 @@ const camera=new THREE.PerspectiveCamera(43,1,.1,150);
 camera.position.set(0,58,76);
 camera.lookAt(0,0,0);
 const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});
-renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.7));
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.35));
 renderer.shadowMap.enabled=true;
 renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.outputColorSpace=THREE.SRGBColorSpace;
@@ -54,7 +54,7 @@ renderer.toneMappingExposure=1.18;
 scene.add(new THREE.HemisphereLight(0xdff6ff,0x31502c,2.0));
 const sun=new THREE.DirectionalLight(0xfff3d8,3.1);
 sun.position.set(-13,27,14);sun.castShadow=true;
-sun.shadow.mapSize.set(2048,2048);
+sun.shadow.mapSize.set(1024,1024);
 sun.shadow.camera.left=-58;sun.shadow.camera.right=58;sun.shadow.camera.top=38;sun.shadow.camera.bottom=-38;
 sun.shadow.bias=-.00025;scene.add(sun);
 const fill=new THREE.DirectionalLight(0x9ecbff,1.15);fill.position.set(18,13,-16);scene.add(fill);
@@ -102,28 +102,43 @@ function stand(x,z,sx,sz,rotation=0){
 }
 stand(0,-37.5,108,5);stand(0,37.5,108,5);stand(-56,0,5,74);stand(56,0,5,74);
 
-// Thousands-seat atmosphere represented by compact, varied crowd silhouettes.
+// Crowd silhouettes are instanced: hundreds of seats render in a handful
+// of draw calls instead of one draw call per spectator.
 const crowdMats=[0xd94f45,0xf0d36b,0xe9ecef,0x3f8edb,0x253b32,0x9b6bc4].map(c=>mat(c,.9));
 const crowdGeo=new THREE.SphereGeometry(.105,7,6);
+const crowdData=Array.from({length:crowdMats.length},()=>[]);
 for(let side of [-1,1]){
  for(let row=0;row<3;row++){
   for(let col=0;col<64;col++){
    if((col+row)%7===0)continue;
-   const person=new THREE.Mesh(crowdGeo,crowdMats[(col*3+row*5)%crowdMats.length]);
-   person.position.set(-53+col*1.68,1.75+row*.43,side*(38.2+row*.22));
-   person.scale.set(.85,1.35,.8);person.castShadow=false;scene.add(person);
+   const index=(col*3+row*5)%crowdMats.length;
+   crowdData[index].push({x:-53+col*1.68,y:1.75+row*.43,z:side*(38.2+row*.22),sx:.85,sy:1.35,sz:.8});
   }
  }
 }
 for(let side of [-1,1]){
  for(let row=0;row<3;row++){
   for(let col=0;col<46;col++){
-   const person=new THREE.Mesh(crowdGeo,crowdMats[(col+row*2)%crowdMats.length]);
-   person.position.set(side*(57.1+row*.22),1.7+row*.42,-34+col*1.5);
-   person.scale.set(.8,1.3,.8);scene.add(person);
+   const index=(col+row*2)%crowdMats.length;
+   crowdData[index].push({x:side*(57.1+row*.22),y:1.7+row*.42,z:-34+col*1.5,sx:.8,sy:1.3,sz:.8});
   }
  }
 }
+const crowdDummy=new THREE.Object3D();
+crowdData.forEach((items,index)=>{
+ if(!items.length)return;
+ const instances=new THREE.InstancedMesh(crowdGeo,crowdMats[index],items.length);
+ instances.castShadow=false;instances.receiveShadow=false;
+ items.forEach((item,i)=>{
+  crowdDummy.position.set(item.x,item.y,item.z);
+  crowdDummy.scale.set(item.sx,item.sy,item.sz);
+  crowdDummy.rotation.set(0,0,0);
+  crowdDummy.updateMatrix();
+  instances.setMatrixAt(i,crowdDummy.matrix);
+ });
+ instances.instanceMatrix.needsUpdate=true;
+ scene.add(instances);
+});
 // Animated-looking LED advertising fascia around the pitch.
 const boardMat=mat(0x102a25,.45,.2);
 for(const side of [-1,1]){
