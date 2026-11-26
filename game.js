@@ -271,6 +271,7 @@ let tutorialActive=false,tutorialStep=0,tutorialDistance=0;
 const input={x:0,z:0,sprint:false};
 let cameraMode='broadcast';
 let cameraYaw=0;
+const cameraForwardScratch=new THREE.Vector3();
 const cameraBtn=document.getElementById('cameraBtn');
 let tackleCooldown=0;
 const goalFlash={until:0};
@@ -330,12 +331,19 @@ function update(dt){
    // view, so dragging left could move the footballer right.
    const forwardInput=-input.z/magnitude;
    const rightInput=input.x/magnitude;
-   const viewForward=camera.getWorldDirection(new THREE.Vector3());
-   viewForward.y=0;
-   viewForward.normalize();
-   const viewRight=new THREE.Vector3().crossVectors(viewForward,new THREE.Vector3(0,1,0)).normalize();
-   dx=viewRight.x*rightInput+viewForward.x*forwardInput;
-   dz=viewRight.z*rightInput+viewForward.z*forwardInput;
+   let forwardX,forwardZ,rightX,rightZ;
+   if(cameraMode==='behind'){
+    // Keep joystick movement tied to the smoothed chase heading, avoiding camera feedback.
+    forwardX=Math.sin(cameraYaw);forwardZ=Math.cos(cameraYaw);
+    rightX=-Math.cos(cameraYaw);rightZ=Math.sin(cameraYaw);
+   }else{
+    const viewForward=camera.getWorldDirection(cameraForwardScratch);
+    viewForward.y=0;viewForward.normalize();
+    forwardX=viewForward.x;forwardZ=viewForward.z;
+    rightX=-forwardZ;rightZ=forwardX;
+   }
+   dx=rightX*rightInput+forwardX*forwardInput;
+   dz=rightZ*rightInput+forwardZ*forwardInput;
   }
   const worldLength=Math.hypot(dx,dz)||1;
   dx/=worldLength;dz/=worldLength;
@@ -580,15 +588,15 @@ function update(dt){
   // looking from the wrong side during turns.
   const targetYaw=player.root.rotation.y;
   const angleDelta=Math.atan2(Math.sin(targetYaw-cameraYaw),Math.cos(targetYaw-cameraYaw));
-  cameraYaw+=angleDelta*(1-Math.exp(-dt*4.2));
-  const distance=15.5;
+  cameraYaw+=angleDelta*(1-Math.exp(-dt*8.0));
+  const distance=13.2;
   const desiredX=px-Math.sin(cameraYaw)*distance;
   const desiredZ=pz-Math.cos(cameraYaw)*distance;
-  const follow=1-Math.exp(-dt*4.0);
+  const follow=1-Math.exp(-dt*9.0);
   camera.position.x+=(desiredX-camera.position.x)*follow;
-  camera.position.y+=(10.5-camera.position.y)*(1-Math.exp(-dt*3.0));
+  camera.position.y+=(8.8-camera.position.y)*(1-Math.exp(-dt*6.5));
   camera.position.z+=(desiredZ-camera.position.z)*follow;
-  camera.lookAt(px+Math.sin(cameraYaw)*4.1,1.05,pz+Math.cos(cameraYaw)*4.1);
+  camera.lookAt(px+Math.sin(cameraYaw)*3.2,1.0,pz+Math.cos(cameraYaw)*3.2);
  }else{
   const centerX=px*.42+bx*.58;
   camera.position.x+=(centerX*.28-camera.position.x)*Math.min(1,dt*1.7);
@@ -625,7 +633,9 @@ function updateCameraLabel(){
 }
 updateCameraLabel();
 cameraBtn.addEventListener('click',()=>{
- cameraMode=cameraMode==='broadcast'?'behind':cameraMode==='behind'?'side':'broadcast';
+ const nextMode=cameraMode==='broadcast'?'behind':cameraMode==='behind'?'side':'broadcast';
+ if(nextMode==='behind')cameraYaw=player.root.rotation.y;
+ cameraMode=nextMode;
  updateCameraLabel();
 });
 function frame(now){
