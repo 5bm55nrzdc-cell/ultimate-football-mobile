@@ -215,7 +215,7 @@ for(const side of [-1,1]){
  badge.position.set(0,1.45,.405);root.add(badge);
  const shadow=new THREE.Mesh(new THREE.CircleGeometry(.57,24),new THREE.MeshBasicMaterial({color:0x07140c,transparent:true,opacity:.27}));
  shadow.rotation.x=-Math.PI/2;shadow.position.y=.018;root.add(shadow);
- return {root,legs,arms,shadow,dx:1,dz:0,phase:0};
+ return {root,legs,arms,shadow,dx:1,dz:0,phase:0,aiVelocity:new THREE.Vector2()};
 }
 const player=makePlayer(0x2d8cff,0xffffff,10);
 const rival=makePlayer(0xe94e48,0xffd44c,9);
@@ -632,7 +632,9 @@ function update(dt){
  }
 }
 function resetPositions(){
- playerVelocity.set(0,0);player.root.position.set(-21,0,0);rival.root.position.set(21,0,0);
+ playerVelocity.set(0,0);
+  for(const actor of [player,rival,...teammates,...opponents,homeKeeper,awayKeeper])actor.aiVelocity.set(0,0);
+  player.root.position.set(-21,0,0);rival.root.position.set(21,0,0);
  teammates.forEach(m=>m.root.position.set(m.homeX,0,m.homeZ));
  opponents.forEach(e=>e.root.position.set(e.awayX,0,e.awayZ));
  homeKeeper.root.position.set(-50,0,0);awayKeeper.root.position.set(50,0,0);
