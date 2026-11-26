@@ -392,10 +392,22 @@ function update(dt){
     if(d>0.01&&d<2.8){const force=(2.8-d)/2.8;sx+=dx/d*force;sz+=dz/d*force}
    }
    tx=clamp(tx+sx*3.2,-48,48);tz=clamp(tz+sz*3.2,-30,30);
-   const dx=tx-bot.root.position.x,dz=tz-bot.root.position.z,d=Math.hypot(dx,dz)||1,step=Math.min(d,speed*dt);
-   bot.root.position.x+=dx/d*step;bot.root.position.z+=dz/d*step;
-   if(d>.22)bot.root.rotation.y=Math.atan2(dx,dz);
-   updatePlayerVisual(bot,dt,d>.55);
+    const dx=tx-bot.root.position.x,dz=tz-bot.root.position.z,d=Math.hypot(dx,dz);
+    bot.aiVelocity=bot.aiVelocity||new THREE.Vector2();
+    const desiredSpeed=speed*clamp(d/1.1,0,1);
+    const desiredX=d>.001?dx/d*desiredSpeed:0,desiredZ=d>.001?dz/d*desiredSpeed:0;
+    const response=1-Math.exp(-dt*(d<1.2?9:6.5));
+    bot.aiVelocity.x+=(desiredX-bot.aiVelocity.x)*response;
+    bot.aiVelocity.y+=(desiredZ-bot.aiVelocity.y)*response;
+    bot.root.position.x=clamp(bot.root.position.x+bot.aiVelocity.x*dt,-50,50);
+    bot.root.position.z=clamp(bot.root.position.z+bot.aiVelocity.y*dt,-32,32);
+    const actualSpeed=Math.hypot(bot.aiVelocity.x,bot.aiVelocity.y);
+    if(actualSpeed>.16){
+     const facing=Math.atan2(bot.aiVelocity.x,bot.aiVelocity.y);
+     const turn=Math.atan2(Math.sin(facing-bot.root.rotation.y),Math.cos(facing-bot.root.rotation.y));
+     bot.root.rotation.y+=turn*(1-Math.exp(-dt*10));
+    }
+    updatePlayerVisual(bot,dt,actualSpeed>.35);
   };
   const homeHasBall=isHomeOwner(ball.owner),awayHasBall=isAwayOwner(ball.owner);
   const homeChaser=nearest(teammates,ball.x,ball.z),awayChaser=nearest(opponents,ball.x,ball.z);
