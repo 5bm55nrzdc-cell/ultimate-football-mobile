@@ -269,6 +269,7 @@ function setPossession(actor,side){ball.owner=ownerKey(actor,side);ball.vx=0;bal
 const state={running:false,last:0,elapsed:0,home:0,away:0};
 let tutorialActive=false,tutorialStep=0,tutorialDistance=0;
 const input={x:0,z:0,sprint:false};
+const playerVelocity=new THREE.Vector2();
 let cameraMode='broadcast';
 let cameraYaw=0;
 const cameraForwardScratch=new THREE.Vector3();
@@ -348,11 +349,23 @@ function update(dt){
   const worldLength=Math.hypot(dx,dz)||1;
   dx/=worldLength;dz/=worldLength;
   player.dx=dx;player.dz=dz;
-  const speed=input.sprint?8.7:6.1;
-  player.root.position.x=clamp(player.root.position.x+dx*speed*dt,-50,50);
-  player.root.position.z=clamp(player.root.position.z+dz*speed*dt,-32,32);
-  player.root.rotation.y=Math.atan2(dx,dz);
-  moving=true;
+  const targetSpeed=input.sprint?8.7:6.1;
+  const targetVX=dx*targetSpeed,targetVZ=dz*targetSpeed;
+  const accel=1-Math.exp(-dt*(ball.owner==='player'?7.2:10.5));
+  playerVelocity.x+=(targetVX-playerVelocity.x)*accel;
+  playerVelocity.y+=(targetVZ-playerVelocity.y)*accel;
+  player.root.position.x=clamp(player.root.position.x+playerVelocity.x*dt,-50,50);
+  player.root.position.z=clamp(player.root.position.z+playerVelocity.y*dt,-32,32);
+  const facing=Math.atan2(playerVelocity.x,playerVelocity.y);
+  const faceDelta=Math.atan2(Math.sin(facing-player.root.rotation.y),Math.cos(facing-player.root.rotation.y));
+  player.root.rotation.y+=faceDelta*(1-Math.exp(-dt*12));
+  moving=Math.hypot(playerVelocity.x,playerVelocity.y)>.35;
+ }else{
+  const braking=1-Math.exp(-dt*9.5);
+  playerVelocity.x*=braking;playerVelocity.y*=braking;
+  player.root.position.x=clamp(player.root.position.x+playerVelocity.x*dt,-50,50);
+  player.root.position.z=clamp(player.root.position.z+playerVelocity.y*dt,-32,32);
+  moving=Math.hypot(playerVelocity.x,playerVelocity.y)>.35;
  }
  updatePlayerVisual(player,dt,moving);
  if(tutorialActive&&moving&&(tutorialStep!==1||input.sprint))updateTutorialDistance((input.sprint?8.7:6.1)*dt);
@@ -606,7 +619,7 @@ function update(dt){
  }
 }
 function resetPositions(){
- player.root.position.set(-21,0,0);rival.root.position.set(21,0,0);
+ playerVelocity.set(0,0);player.root.position.set(-21,0,0);rival.root.position.set(21,0,0);
  teammates.forEach(m=>m.root.position.set(m.homeX,0,m.homeZ));
  opponents.forEach(e=>e.root.position.set(e.awayX,0,e.awayZ));
  homeKeeper.root.position.set(-50,0,0);awayKeeper.root.position.set(50,0,0);
