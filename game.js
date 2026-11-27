@@ -314,6 +314,25 @@ function updatePlayerVisual(p,dt,moving){
  p.root.rotation.x=moving?-.035:0;
  p.root.position.y=moving?Math.abs(Math.sin(p.phase*2))*.045:0;
 }
+function moveWithMomentum(actor,tx,tz,maxSpeed,dt){
+ actor.aiVelocity=actor.aiVelocity||new THREE.Vector2();
+ const dx=tx-actor.root.position.x,dz=tz-actor.root.position.z,d=Math.hypot(dx,dz);
+ const desiredSpeed=maxSpeed*clamp(d/1.1,0,1);
+ const desiredX=d>.001?dx/d*desiredSpeed:0,desiredZ=d>.001?dz/d*desiredSpeed:0;
+ const response=1-Math.exp(-dt*(d<1.2?9:6.5));
+ actor.aiVelocity.x+=(desiredX-actor.aiVelocity.x)*response;
+ actor.aiVelocity.y+=(desiredZ-actor.aiVelocity.y)*response;
+ actor.root.position.x=clamp(actor.root.position.x+actor.aiVelocity.x*dt,-50,50);
+ actor.root.position.z=clamp(actor.root.position.z+actor.aiVelocity.y*dt,-32,32);
+ const speed=Math.hypot(actor.aiVelocity.x,actor.aiVelocity.y);
+ if(speed>.16){
+  const facing=Math.atan2(actor.aiVelocity.x,actor.aiVelocity.y);
+  const delta=Math.atan2(Math.sin(facing-actor.root.rotation.y),Math.cos(facing-actor.root.rotation.y));
+  actor.root.rotation.y+=delta*(1-Math.exp(-dt*10));
+ }
+ updatePlayerVisual(actor,dt,speed>.35);
+ return speed;
+}
 function update(dt){
  tackleCooldown=Math.max(0,tackleCooldown-dt);
  ball.lastTouchLock=Math.max(0,ball.lastTouchLock-dt);
@@ -371,14 +390,8 @@ function update(dt){
  if(tutorialActive&&moving&&(tutorialStep!==1||input.sprint))updateTutorialDistance((input.sprint?8.7:6.1)*dt);
  const rivalTarget=tutorialActive&&tutorialStep===5?player.root.position:(isHomeOwner(ball.owner)?player.root.position:(isAwayOwner(ball.owner)?{x:-41.5,z:clamp(ball.z*.35,-2.5,2.5)}:ball));
   const rx=rivalTarget.x-rival.root.position.x,rz=rivalTarget.z-rival.root.position.z,rd=Math.hypot(rx,rz)||1;
-  if(rd>.65){
-   const speed=isAwayOwner(ball.owner)?5.25:6.5;
-   rival.root.position.x=clamp(rival.root.position.x+rx/rd*speed*dt,-50,50);
-   rival.root.position.z=clamp(rival.root.position.z+rz/rd*speed*dt,-32,32);
-   rival.root.rotation.y=Math.atan2(rx,rz);
-  }
-  if(!ball.owner&&rd<.9){setPossession(rival,'away')}
-  updatePlayerVisual(rival,dt,rd>.65);
+   moveWithMomentum(rival,rivalTarget.x,rivalTarget.z,isAwayOwner(ball.owner)?5.25:6.5,dt);
+   if(!ball.owner&&rd<.9){setPossession(rival,'away')}
   // Autonomous team AI: react to possession, open space, pressure and nearby players.
   const nearest=(arr,x,z)=>arr.reduce((best,p,i)=>{
    const d=Math.hypot(p.root.position.x-x,p.root.position.z-z);
@@ -392,22 +405,7 @@ function update(dt){
     if(d>0.01&&d<2.8){const force=(2.8-d)/2.8;sx+=dx/d*force;sz+=dz/d*force}
    }
    tx=clamp(tx+sx*3.2,-48,48);tz=clamp(tz+sz*3.2,-30,30);
-    const dx=tx-bot.root.position.x,dz=tz-bot.root.position.z,d=Math.hypot(dx,dz);
-    bot.aiVelocity=bot.aiVelocity||new THREE.Vector2();
-    const desiredSpeed=speed*clamp(d/1.1,0,1);
-    const desiredX=d>.001?dx/d*desiredSpeed:0,desiredZ=d>.001?dz/d*desiredSpeed:0;
-    const response=1-Math.exp(-dt*(d<1.2?9:6.5));
-    bot.aiVelocity.x+=(desiredX-bot.aiVelocity.x)*response;
-    bot.aiVelocity.y+=(desiredZ-bot.aiVelocity.y)*response;
-    bot.root.position.x=clamp(bot.root.position.x+bot.aiVelocity.x*dt,-50,50);
-    bot.root.position.z=clamp(bot.root.position.z+bot.aiVelocity.y*dt,-32,32);
-    const actualSpeed=Math.hypot(bot.aiVelocity.x,bot.aiVelocity.y);
-    if(actualSpeed>.16){
-     const facing=Math.atan2(bot.aiVelocity.x,bot.aiVelocity.y);
-     const turn=Math.atan2(Math.sin(facing-bot.root.rotation.y),Math.cos(facing-bot.root.rotation.y));
-     bot.root.rotation.y+=turn*(1-Math.exp(-dt*10));
-    }
-    updatePlayerVisual(bot,dt,actualSpeed>.35);
+    moveWithMomentum(bot,tx,tz,speed,dt);
   };
   const homeHasBall=isHomeOwner(ball.owner),awayHasBall=isAwayOwner(ball.owner);
   const homeChaser=nearest(teammates,ball.x,ball.z),awayChaser=nearest(opponents,ball.x,ball.z);
@@ -494,9 +492,7 @@ function update(dt){
       }).sort((a,b)=>b.score-a.score);
       if(candidates[0])targetZ=candidates[0].z;
      }
-     const dx=goalX-root.position.x,dz=targetZ-root.position.z,len=Math.hypot(dx,dz)||1,stride=Math.min(len,3.15*dt);
-     root.rotation.y=Math.atan2(dx,dz);root.position.x+=dx/len*stride;root.position.z+=dz/len*stride;
-     updatePlayerVisual(activeCarrier,dt,stride>.02);
+     moveWithMomentum(activeCarrier,goalX,targetZ,3.15,dt);
     }
    }
      // Goalkeepers track the ball laterally while staying close to their goal line.
@@ -515,13 +511,8 @@ function update(dt){
    [homeKeeper,-50+homeStep,keeperHomeZ,ball.vx< -3],
    [awayKeeper,50-awayStep,keeperAwayZ,ball.vx>3]
   ]){
-   const kx=gx-keeper.root.position.x,kz=gz-keeper.root.position.z;
-   const kd=Math.hypot(kx,kz)||1;
    const keeperSpeed=defendingShot?7.2:4.8;
-   const ks=Math.min(kd,keeperSpeed*dt);
-   keeper.root.position.x+=kx/kd*ks;keeper.root.position.z+=kz/kd*ks;
-   if(kd>.2)keeper.root.rotation.y=Math.atan2(kx,kz);
-   updatePlayerVisual(keeper,dt,kd>.35);
+    moveWithMomentum(keeper,gx,gz,keeperSpeed,dt);
   }
  const carrier=getBallCarrier();
  if(carrier){
