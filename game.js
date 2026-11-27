@@ -419,15 +419,18 @@ function update(dt){
    const forward=baseX>0,mid=baseX>-25&&baseX<=0;
    let tx=baseX,tz=baseZ,speed=5.8;
    if(homeHasBall){
-    tx=baseX+(forward?13:mid?8:3)+clamp((bx+10)*.12,-3,7);
-    tz=baseZ*.58+bz*.42+Math.sin(time*1.15+i*1.7)*(forward?3.2:2);
-    if(forward&&Math.abs(mate.root.position.z-player.root.position.z)<4)tz+=mate.root.position.z>player.root.position.z?5:-5;
+    // Attackers stretch the line; midfielders create diagonal passing options.
+    tx=baseX+(forward?13:mid?8:3)+clamp((bx-baseX)*.22,-2,9);
+    const lane=Math.sign(baseZ||((i%2)?1:-1)),width=forward?2.4:1.35;
+    tz=clamp(baseZ*.72+bz*.28+lane*width,-29,29);
+    if(forward&&Math.abs(mate.root.position.z-player.root.position.z)<4)tz+=mate.root.position.z>player.root.position.z?4.5:-4.5;
     if(forward)speed=6.8;
    }else if(awayHasBall){
     if(i===homePress.i){tx=pressTarget.x+1.1;tz=pressTarget.z;speed=7.5}
-    else if(Math.hypot(mate.root.position.x-pressTarget.x,mate.root.position.z-pressTarget.z)<13){
-     tx=(baseX+pressTarget.x)*.5;tz=(baseZ+pressTarget.z)*.5;speed=6.4;
-    }else{tx=baseX-5+clamp((bx-baseX)*.16,-5,4);tz=baseZ*.65+bz*.35;speed=6.2}
+    else if(Math.hypot(mate.root.position.x-pressTarget.x,mate.root.position.z-pressTarget.z)<15){
+     // The second defender screens the forward lane; others keep a compact block.
+     tx=(baseX+pressTarget.x)*.5-1.2;tz=baseZ*.42+pressTarget.z*.58;speed=6.4;
+    }else{tx=baseX-5+clamp((bx-baseX)*.16,-5,4);tz=clamp(baseZ*.72+bz*.28,-28,28);speed=6.2}
    }else if(i===homeChaser.i){tx=bx;tz=bz;speed=7.4}
    else{
     tx=baseX+clamp((bx-baseX)*.25,-8,8);
@@ -441,14 +444,16 @@ function update(dt){
    const forward=baseX<0,mid=baseX<25&&baseX>=0;
    let tx=baseX,tz=baseZ,speed=5.9;
    if(awayHasBall){
-    tx=baseX-(forward?13:mid?8:3)-clamp((10-bx)*.12,-3,7);
-    tz=baseZ*.58+bz*.42+Math.sin(time*1.1+i*1.6)*(forward?3.1:2.1);
+    // Mirrored width and staggered forward runs for the away side.
+    tx=baseX-(forward?13:mid?8:3)-clamp((baseX-bx)*.22,-2,9);
+    const lane=Math.sign(baseZ||((i%2)?1:-1)),width=forward?2.4:1.35;
+    tz=clamp(baseZ*.72+bz*.28+lane*width,-29,29);
     if(forward)speed=6.8;
    }else if(homeHasBall){
     if(i===awayPress.i){tx=pressTarget.x-1.1;tz=pressTarget.z;speed=7.5}
-    else if(Math.hypot(enemy.root.position.x-pressTarget.x,enemy.root.position.z-pressTarget.z)<13){
-     tx=(baseX+pressTarget.x)*.5;tz=(baseZ+pressTarget.z)*.5;speed=6.4;
-    }else{tx=baseX+5+clamp((bx-baseX)*.16,-4,5);tz=baseZ*.65+bz*.35;speed=6.2}
+    else if(Math.hypot(enemy.root.position.x-pressTarget.x,enemy.root.position.z-pressTarget.z)<15){
+     tx=(baseX+pressTarget.x)*.5+1.2;tz=baseZ*.42+pressTarget.z*.58;speed=6.4;
+    }else{tx=baseX+5+clamp((bx-baseX)*.16,-4,5);tz=clamp(baseZ*.72+bz*.28,-28,28);speed=6.2}
    }else if(i===awayChaser.i){tx=bx;tz=bz;speed=7.4}
    else{tx=baseX+clamp((bx-baseX)*.25,-8,8);tz=baseZ*.55+bz*.45+Math.sin(time+i*1.8)*2.3}
    moveBot(enemy,tx,tz,speed,opponents);
